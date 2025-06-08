@@ -2,10 +2,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const path = require("path");
 
-const {
-  getStripePublicKey,
-  getStripeSecretKey,
-} = require("./utils/donotshare");
+// const { nomeFun1 } = require('./utils/stripe');
 
 const app = express();
 const port = 3000;
@@ -18,9 +15,6 @@ const pool = new Pool({
   password: "PizzaPANiN0",
   port: 5432,
 });
-
-console.log("Chiave Pubblica: ", getStripePublicKey());
-console.log("Chiave Segreta: ", getStripeSecretKey());
 
 // Servi la pagina HTML
 app.use(express.static(path.join(__dirname)));
