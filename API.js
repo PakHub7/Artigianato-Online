@@ -1,11 +1,19 @@
 const express = require("express");
 const { Pool } = require("pg");
 const path = require("path");
+const bcrypt = require("bcrypt");
 
 const { getBalance } = require("./utils/payments");
 
 const app = express();
 const port = 3000;
+
+// parametro utili per l'hashing della password (motivo per cui ho messo la libreria bcrypt)
+// viene generata una stringa di dati di lunghezza fissa (l'hash)
+// che è estremamente difficile da invertire per ottenere la password originale
+const SALT_ROUNDS = 10;
+
+app.use(express.json());
 
 // Configura la connessione al tuo server PostgreSQL
 const pool = new Pool({
@@ -27,6 +35,85 @@ app.get("/api/dati", async (req, res) => {
   } catch (err) {
     console.error("Errore nella query", err);
     res.status(500).json({ errore: "Errore durante la query" });
+  }
+});
+
+// TODO: spostare il core delle funzioni nel modulo database.js in ./utils
+app.get("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM utenti WHERE username = $1",
+      [username],
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Utente non trovato" });
+    }
+
+    const user = result.rows[0];
+
+    const match = await bcrypt.compare(password, user.password_hash);
+
+    if (match) {
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } else {
+      res.status(401).json({ success: false, message: "Password errata" });
+    }
+  } catch (err) {
+    console.error("Errore nel login: ", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+app.post("/api/register", async (req, res) => {
+  const { username, password, email } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Username e password sono obbligatori",
+    });
+  }
+
+  try {
+    // Verifica che l'utente non esista già
+    const existing = await pool.query(
+      "SELECT * FROM utenti WHERE username = $1",
+      [username],
+    );
+    if (existing.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Username già in uso" });
+    }
+
+    // Crea hash della password
+    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Inserisce il nuovo utente
+    await pool.query(
+      "INSERT INTO utenti (username, password_hash, email) VALUES ($1, $2, $3)",
+      [username, password_hash, email || null],
+    );
+
+    res.json({ success: true, message: "Registrazione avvenuta con successo" });
+  } catch (err) {
+    console.error("Errore nella registrazione:", err);
+    res.status(500).json({ success: false, message: "Errore del server" });
   }
 });
 
