@@ -3,7 +3,7 @@ let products = [
   {
     id: 1,
     nome: "Borsa in cuoio",
-    descrizione: "Borsa fatta a mano in pelle di Bronte.",
+    descrizione: "Borsa fatta a mano in pelle di Bronte, con cuciture artigianali e dettagli in metallo nichel-free per una maggiore resistenza. Realizzata da Efesto, un artigiano locale che utilizza solo materiali di alta qualità e tecniche tradizionali per creare prodotti unici e durevoli. Questa borsa è perfetta per chi cerca un accessorio elegante e funzionale, ideale per l'uso quotidiano o per occasioni speciali. Ogni pezzo è unico, con piccole imperfezioni che ne attestano l'autenticità e la lavorazione artigianale.", 
     prezzo: "79.00",
     disponibilita: 5,
     artigiano_id: "Efesto",
@@ -61,7 +61,7 @@ function openOverlay(index) {
 
   const images = Array.isArray(product.immagini_url)
     ? product.immagini_url
-    : [product.immagini_url]; // fallback se è stringa
+    : [product.immagini_url]; 
 
   images.slice(0, 5).forEach(url => {
     const img = document.createElement("img");
@@ -72,18 +72,18 @@ function openOverlay(index) {
   });
 
   // Titolo
-  document.getElementById("overlayTitle").textContent = product.nome;
+  document.getElementById("productOverlayTitle").textContent = product.nome;
 
   // Descrizione + Artigiano
-  document.getElementById("overlayDescription").innerHTML = `
+  document.getElementById("productOverlayDescription").innerHTML = `
     <p>${product.descrizione}</p>
-    <p><small>Scopri il venditore: ${product.artigiano_id}</small></p>`;
+    <p><small>Scopri il venditore: ${product.artigiano_id}</small></p>`; // Qui va collegato al profilo dell'artigiano
 
   // Prezzo
-  document.getElementById("overlayPrice").textContent = `${parseFloat(product.prezzo).toFixed(2)} €`;
+  document.getElementById("productOverlayPrice").textContent = `${parseFloat(product.prezzo).toFixed(2)} €`;
 
   // Disponibilità
-  document.getElementById("overlayAvailability").textContent =
+  document.getElementById("productOverlayAvailability").textContent =
     `Disponibilità: ${product.disponibilita > 0 ? product.disponibilita + ' pezzi' : 'Non disponibile'}`;
 
   // Mostra overlay con classe CSS
@@ -100,7 +100,7 @@ function closeOverlay() {
 
 // Chiudi productOverlay cliccando fuori 
 document.getElementById("productOverlay").addEventListener("click", function (event) {
-  if (!event.target.closest(".overlay-content") && !event.target.classList.contains("overlay-arrow")) {
+  if (!event.target.closest(".product-overlay-content") && !event.target.classList.contains("overlay-arrow")) {
     closeOverlay();
   }
 });
@@ -136,3 +136,11 @@ function updateArrowVisibility() {
   leftArrow.classList.toggle("hidden", currentProductIndex <= 0);
   rightArrow.classList.toggle("hidden", currentProductIndex >= products.length - 1);
 }
+function changeQuantity(delta) {
+  const input = document.getElementById("quantityInput");
+  let newVal = parseInt(input.value) + delta;
+  if (newVal < 1) newVal = 1;
+  input.value = newVal;
+}
+
+

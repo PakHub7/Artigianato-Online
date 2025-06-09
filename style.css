@@ -1,5 +1,6 @@
 /* === BASE === */
 body {
+  padding-top: 80px;
   background-color: #f7f7f7;
   color: #333;
   font-family: 'Segoe UI', sans-serif;
@@ -10,7 +11,25 @@ h1, h2 {
   color: #2c3e50;
 }
 
-/* === NAV BUTTONS === */
+.header {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+/* === NAVBAR === */
+.navbar {
+  z-index: 500; 
+}
+
+.navbar-nav {
+  width: 85%;
+}
+
+body.overlay-active .navbar {
+  filter: blur(2px); /* Effetto sfocatura opzionale */
+  pointer-events: none; /* Disattiva interazioni */
+}
+
 .nav-btn {
   background: transparent;
   border: 1px solid transparent;
@@ -88,7 +107,7 @@ h1, h2 {
   pointer-events: auto;
 }
 
-.overlay-content {
+.product-overlay-content {
   background: white;
   border-radius: 1.5rem;
   padding: 1.5rem;
@@ -101,29 +120,41 @@ h1, h2 {
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-.overlay-content h2 {
-  margin: 0.5rem 0 1rem;
-  font-size: 1.8rem;
+.product-overlay-title {
+  font-size: 2rem;
+  font-weight: 600;
   color: #333;
+  margin: 1rem 0 0.5rem 0;
+  text-align: left;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
 }
 
-.description p {
-  margin: 0.3rem 0;
+.product-overlay-description {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+  text-align: left;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  max-width: 100%;
 }
 
-.availability {
-  font-size: 0.9rem;
-  color: #888;
+.product-overlay-availability {
+  font-size: 0.7rem;
+  color: #666666;
+  margin-bottom: 0.5rem;
+  text-align: left;
 }
 
-.price {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-top: 0.5rem;
+.product-overlay-price {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #333;
+  margin: 0.5rem 0;
+  bottom: 1rem;
+  text-align: left;
 }
 
 .add-to-cart-btn {
-  margin-top: 1.5rem;
   padding: 0.8rem 1.5rem;
   background: #007bff;
   color: white;
@@ -131,6 +162,7 @@ h1, h2 {
   border-radius: 0.6rem;
   cursor: pointer;
   font-size: 1rem;
+  bottom: 0;
 }
 
 .add-to-cart-btn:hover {
@@ -152,7 +184,7 @@ h1, h2 {
   border-radius: 50%;
   backdrop-filter: blur(5px);
   background: rgba(255, 255, 255, 0.3);
-  color: #666;
+  color: #484848;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease, color 0.3s;
   z-index: 100;
@@ -254,35 +286,35 @@ h1, h2 {
   z-index: 2000;
 }
 
-.overlay-box {
-  background: #fff;
-  padding: rem;
-  border-radius: 12px;
+.login-overlay-content {
+  background-color: white;
+  box-sizing: border-box;
+  border-radius: 20px;
+  text-align: center;
   max-width: 400px;
-  width: 90%;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  width: 70%;
+  
   position: relative;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+  justify-content: center;
+  padding: 1.7rem;
 }
 
-.overlay-box input {
-  width: 100%;
-  padding: 0.6rem;
-  margin-top: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.login-overlay-content u{
+  color: #777777;
+  font-size: 0.7rem;
+  margin-top: 0;
 }
 
-.overlay-box button {
-  width: 100%;
-  padding: 0.7rem;
-  margin-top: 1.2rem;
-  background-color: #333;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+.login-overlay-content u:hover {
+  color: #333333;
 }
-
+.login-form {
+  padding-top: 12px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 0;
+}
 .error-msg {
   color: red;
   margin-top: 0.5rem;
@@ -309,18 +341,6 @@ h1, h2 {
   display: none !important;
 }
 
-/* === Login Box === */
-.overlay-box {
-  background-color: #fff;
-  color: #333;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 400px;
-  position: relative;
-}
-
 /* === Register Box === */
 register-overlay {
   position: fixed;
@@ -341,28 +361,103 @@ register-overlay {
 
 .register-overlay-content {
   background-color: white;
-  padding: 1.7rem;
+  box-sizing: border-box;
   border-radius: 20px;
   text-align: center;
-  max-width: 800px; 
-  width: 70%;        
+  max-width: 570px;
+  width: 70%;
+  min-height: 40vh;
   position: relative;
-  box-shadow: 0 6px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+  justify-content: center;
+  padding: 1.7rem;
+}
+.register-overlay-section { 
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+  width: 100%; 
+  height: 100%; 
 }
 
+/* === Register Role Selection === */
+.register-title, .register-title-form {
+  font-size: 1.5rem;
+  color: #333;
+  opacity: 0;
+  animation: fadeInText 0.6s forwards;
+}
+
+.register-title{
+  margin: 0 0 1.5rem;
+}
+
+.register-button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-width: 300px;
+  min-height: 210px;
+}
+
+.register-user-button {
+  flex: 1 1 45%;
+  padding: 0;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  background-color: #f4f4f8;
+  transition: background-color 0.25s ease,
+              transform 0.15s ease,
+              box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.register-user-button i {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  transition: transform 0.25s ease;
+}
+
+.register-user-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.register-user-button:hover i {
+  transform: rotate(10deg);
+}
+
+.register-user-button:hover i {
+  color: #005fcc;
+}
 /* === Form Styling === */
 form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
+  padding: 1.1rem;
+  padding-left: 1.4rem;
+  padding-right: 1.4rem;
+
 }
 
+.register-title-form{
+  margin: 0 0 1rem;
+}
 form input {
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border: 1px solid #ccc;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: border-color 0.3s;
 }
 
@@ -372,7 +467,7 @@ form input:focus {
 }
 
 form button {
-  padding: 0.75rem;
+  padding: 0.6rem 1rem;
   border: none;
   border-radius: 8px;
   background-color: #007aff;
@@ -394,66 +489,12 @@ form button:hover {
   margin-top: -0.5rem;
 }
 
-/* === Register Role Selection === */
-.register-title {
-  font-size: 2rem;
-  margin-bottom: 1.7rem;
-  color: #333;
-  opacity: 0;
-  animation: fadeInText 0.6s forwards;
-
-}
-
-.register-button-group {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-}
-
-.register-user-button {
-  flex: 1;
-  padding: 4rem 2rem;
-  font-size: 1.6rem;
-  border: none;
-  border-radius: 14px;
-  cursor: pointer;
-  background-color: #f4f4f8;
-  transition: background-color 0.25s ease,
-              transform 0.15s ease,
-              box-shadow 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 160px;
-}
-
-.register-user-button i {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  transition: transform 0.25s ease;
-}
-
-.register-user-button:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-}
-
-.register-user-button:hover i {
-  transform: rotate(10deg);
-}
-
-.register-user-button:hover i {
-  color: #005fcc;
-}
-
 /* === Responsive === */
 @media (max-width: 500px) {
   .overlay-box,
   .register-overlay-content {
-    padding: 1.5rem;
+    padding: 1rem;
+    width: 90%;
   }
   .register-user-button {
     font-size: 0.9rem;
@@ -479,4 +520,170 @@ form button:hover {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.cart-action {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.quantity-selector button {
+  background: #f0f0f0;
+  border: none;
+  padding: 0.6rem 1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.quantity-selector input {
+  width: 3rem;
+  text-align: center;
+  border: none;
+  font-size: 1rem;
+  outline: none;
+}
+
+/* Popup animato */
+.cart-popup {
+  position: fixed;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #007aff;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 1000;
+}
+
+.cart-popup.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+/* === CART STYLES === */
+/* Pulsante fluttuante carrello */
+#floatingCartBtn {
+  position: fixed;
+  top: 20px;
+  right: 15px;
+  z-index: 1000;
+  width: 60px;
+  height: 60px;
+  background-color: #ffc609;
+  border: none;
+  color: white;
+  font-size: 26px;
+  border-radius: 50%;
+  cursor: move;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#floatingCartBtn:hover {
+  background-color: #e9b200;
+}
+
+/* Sidebar Carrello */
+#cartContainer {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 350px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  padding: 1rem;
+  height: calc(100% - 60px);
+  background-color: #fff;
+  border-left: 1px solid #ccc;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.4s ease;
+}
+
+#cartContainer.show{
+  transform: translateX(0);
+}
+
+.cart-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s ease;
+  z-index: 1001;
+  font-size: 1.5rem;
+  font-weight: 300;
+  transform: scaleY(1.5);
+  padding: 4px 8px
+}
+
+.cart-close-btn:hover {
+  color: #333;
+}
+
+.cart-container.hidden {
+  transform: translateX(100%);
+}
+
+.cart-container:not(.hidden) {
+  transform: translateX(0);
+}
+
+.cart-items {
+  margin-top: 20px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding: 15px 0;
+}
+
+.cart-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  margin-right: 15px;
+}
+
+.cart-summary {
+  margin-top: 30px;
+  text-align: right;
+  font-size: 18px;
+}
+
+.checkout-btn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
