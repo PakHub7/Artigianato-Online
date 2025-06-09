@@ -36,20 +36,20 @@ app.post("/api/login", async (req, res) => {
   const result = await login(username, password);
 
   if (result.success) {
-    return res.json({ success: true, user: result.user });
+    return result.status(200).json({ success: true, user: result.user });
   }
 
-  switch (result.reason) {
+  switch (result.message) {
     case "not_found":
-      return res
+      return result
         .status(401)
         .json({ success: false, message: "Utente non trovato" });
     case "wrong_password":
-      return res
+      return result
         .status(401)
         .json({ success: false, message: "Password errata" });
     default:
-      return res
+      return result
         .status(500)
         .json({ success: false, message: "Errore interno del server" });
   }
@@ -57,6 +57,22 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/register", async (req, res) => {
   const { username, password, email } = req.body;
+  const result = await register(username, password, email);
+
+  if (result.success) {
+    return result.status(200).json({ success: true, user: result.user });
+  } else if (result.message === "user_already_exists") {
+    return result
+      .status(401)
+      .json({
+        success: false,
+        message: "Un utente con questo username è già esistente",
+      });
+  } else {
+    return result
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
 });
 
 app.get("/api/test/stripe/balance", async (req, res) => {

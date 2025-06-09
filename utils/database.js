@@ -37,9 +37,10 @@ async function login(username, password) {
       return {
         success: true,
         user: {
-          id: user.id,
+          // id: user.id, // Non dovrebbe servire nei risultati login/signup ma solo come indicizzazione
           username: user.username,
           email: user.email,
+          indirizzo: user.indirizzo, // è meglio restituirlo solo quando serve, rimuovere in seguito + aggiungerlo come dato per i pagamenti
           role: user.ruolo,
         },
       };
@@ -52,7 +53,7 @@ async function login(username, password) {
   }
 }
 
-async function register(username, password, email) {
+async function register(username, password, email, indirizzo, ruolo) {
   try {
     if (!username || !password) {
       return res.status(400).json({
@@ -66,10 +67,19 @@ async function register(username, password, email) {
     if (!user) {
       const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
       const result = await pool.query(
-        "INSERT INTO utenti (username, password_hash, email) VALUES ($1, $2, $3)",
-        [username, password_hash, email],
+        "INSERT INTO utenti (username, password_hash, email, indirizzo, ruolo) VALUES ($1, $2, $3, $4, $5)",
+        [username, password_hash, email, indirizzo, ruolo],
       );
-      return { success: true };
+      return {
+        success: true,
+        user: {
+          // id: user.id, // Non dovrebbe servire nei risultati login/signup ma solo come indicizzazione
+          username: username,
+          email: email,
+          indirizzo: indirizzo, // è meglio restituirlo solo quando serve, rimuovere in seguito + aggiungerlo come dato per i pagamenti
+          role: ruolo, // TODO: aggiungere il ruolo
+        },
+      };
     } else {
       return { success: false, message: "user_already_exists" };
     }
