@@ -10,6 +10,7 @@ const pool = new Pool({
   port: 5432,
 });
 
+// SEZIONE UTENTE
 async function userExists(username) {
   const result = await pool.query("SELECT * FROM utenti WHERE username = $1", [
     username,
@@ -116,5 +117,94 @@ async function register(username, password, email, indirizzo, ruolo) {
     res.status(500).json({ success: false, message: "Errore del server" });
     } */
 }
+
+// SEZIONE PRODOTTI
+async function getProductImage() {
+  // get 1 or all
+}
+
+// // comando = {}
+// ottenere 1 sola immagine per la vetrina
+async function getProducts(comando) {
+  // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri
+  let query = "SELECT id, nome, prezzo FROM prodotti";
+  const valori = [];
+  const conditions = [];
+  let i = 1;
+
+  if (comando) {
+    if ("categoria" in comando) {
+      conditions.push(`categoria = $${i}`);
+      valori.push(comando["categoria"]);
+      i++;
+    }
+
+    if ("prezzo_min" in comando) {
+      conditions.push(`prezzo >= $${i}`);
+      valori.push(comando["prezzo_min"]);
+      i++;
+    }
+
+    if ("prezzo_max" in comando) {
+      conditions.push(`prezzo <= $${i}`);
+      valori.push(comando["prezzo_max"]);
+      i++;
+    }
+
+    if ("disponibilita" in comando) {
+      conditions.push(`disponibilita = $${i}`);
+      valori.push(comando["disponibilita"]);
+      i++;
+    }
+
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
+    if ("limit" in comando && typeof comando.limit === "number") {
+      query += ` LIMIT $${i}`;
+      valori.push(comando.limit);
+    }
+  }
+
+  try {
+    const result = await pool.query(
+      query,
+      valori.length > 0 ? valori : undefined,
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error executing query:", error);
+    throw error;
+  }
+}
+
+async function getProduct(id) {
+  // manca la funzione per prendere tutte le immagini del prodotto, capire come vogliono gestirle + salvarle (path, url o blob)
+  const result = await pool.query("SELECT * FROM prodotti WHERE id = $1", [id]);
+  return result;
+}
+
+// SEZIONE ORDINI / CARRELLO
+/*
+1. controllo disponibilità ordini
+2. se disponibili, eliminazione dal database della quantità richiesta dei prodotti e aggiunta in tabella ordini degli ordini effettuati
+3. se non disponibili si notifica l'utente mostrando i prodotti che non sono più disponibili
+*/
+async function notifyUser() {
+  // se alcuni prodotti nel carrello non sono più disponibili
+}
+
+async function checkAvailablity(ids) {
+  const result = await pool.query(
+    "SELECT disponibilita FROM prodotti WHERE id = ANY($1)",
+    [ids],
+  );
+  return result.rows;
+}
+
+async function lockProducts() {}
+
+// SEZIONE PAGAMENTI
 
 module.exports = { login, register };
