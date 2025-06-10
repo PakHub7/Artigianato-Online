@@ -84,10 +84,37 @@ app.get("/api/products", async (req, res) => {
   /* Esempio richiesta API
     GET /api/products?categoria=abbigliamento&prezzo_min=50&disponibilita=100&limit=10
     req.query sarà { categoria: 'abbigliamento', prezzo_min: '50', disponibilita: '100', limit: '10' }
+
+    risultato completo con successo:
+    {
+      "success": true,
+      "products": [
+        { "id": 1, "nome": "Prodotto A", "prezzo": 10.00 },
+        { "id": 2, "nome": "Prodotto B", "prezzo": 25.50 }
+      ]
+    }
+
+    risultato fallimentare:
+    {
+      "success": false,
+      "message": "product_not_found"
+    }
+
+    errore server interno:
+    {
+      "success": false,
+      "message": "Errore interno del server"
+    }
   */
   try {
     const products = await getProducts(req);
-    return res.status(200).json({ success: true, products: products }); // products contiene l'array dei prodotti
+    if (products.success) {
+      return res.status(200).json({ success: true, products: products }); // products contiene l'array dei prodotti
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: products.message }); // TODO: decidere se tenere result.message oppure scrivere un messaggio in tutte le req
+    }
   } catch (error) {
     console.error("Errore durante il recupero dei prodotti:", error);
     return res
