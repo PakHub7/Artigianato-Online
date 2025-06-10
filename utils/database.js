@@ -10,7 +10,7 @@ const pool = new Pool({
   port: 5432,
 });
 
-// SEZIONE UTENTE
+// SEZIONE UTENTI
 async function userExists(username) {
   const result = await pool.query("SELECT * FROM utenti WHERE username = $1", [
     username,
@@ -125,14 +125,17 @@ async function getProductImage() {
 
 // // comando = {}
 // ottenere 1 sola immagine per la vetrina
-async function getProducts(comando) {
+async function getProducts(req) {
   // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri
+  const comando = req ? req.query : {}; // Se req è undefined, usa un oggetto vuoto
+
   let query = "SELECT id, nome, prezzo FROM prodotti";
   const valori = [];
   const conditions = [];
   let i = 1;
 
-  if (comando) {
+  // Controlla se ci sono parametri nel 'comando'
+  if (Object.keys(comando).length > 0) {
     if ("categoria" in comando) {
       conditions.push(`categoria = $${i}`);
       valori.push(comando["categoria"]);
@@ -141,19 +144,19 @@ async function getProducts(comando) {
 
     if ("prezzo_min" in comando) {
       conditions.push(`prezzo >= $${i}`);
-      valori.push(comando["prezzo_min"]);
+      valori.push(parseFloat(comando["prezzo_min"]));
       i++;
     }
 
     if ("prezzo_max" in comando) {
       conditions.push(`prezzo <= $${i}`);
-      valori.push(comando["prezzo_max"]);
+      valori.push(parseFloat(comando["prezzo_max"]));
       i++;
     }
 
     if ("disponibilita" in comando) {
-      conditions.push(`disponibilita = $${i}`);
-      valori.push(comando["disponibilita"]);
+      conditions.push(`disponibilita >= $${i}`); // Mostra solo prodotti con almeno X unità disponibili
+      valori.push(parseInt(comando["disponibilita"]));
       i++;
     }
 
@@ -161,9 +164,15 @@ async function getProducts(comando) {
       query += " WHERE " + conditions.join(" AND ");
     }
 
-    if ("limit" in comando && typeof comando.limit === "number") {
+    if ("limit" in comando && typeof comando.limit === "string") {
+      const limite = parseInt(comando.limit);
       query += ` LIMIT $${i}`;
-      valori.push(comando.limit);
+      // Assicurarsi che sia un numero valido
+      if (!isNaN(limite)) {
+        query += ` LIMIT $${i}`;
+        valori.push(limite);
+        i++;
+      }
     }
   }
 
@@ -175,14 +184,18 @@ async function getProducts(comando) {
     return result.rows;
   } catch (error) {
     console.error("Error executing query:", error);
-    throw error;
+    throw error; // sostituire con un return { success: false, message: "" };
   }
 }
 
 async function getProduct(id) {
   // manca la funzione per prendere tutte le immagini del prodotto, capire come vogliono gestirle + salvarle (path, url o blob)
   const result = await pool.query("SELECT * FROM prodotti WHERE id = $1", [id]);
-  return result;
+  const product = result.rows[0];
+  if (!product) {
+    return { success: false, message: "product_not_found" };
+  }
+  return product;
 }
 
 // SEZIONE ORDINI / CARRELLO
@@ -207,4 +220,4 @@ async function lockProducts() {}
 
 // SEZIONE PAGAMENTI
 
-module.exports = { login, register };
+module.exports = { login, register, getProductImage, getProduct, getProducts };

@@ -4,7 +4,13 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 
 const { getBalance } = require("./utils/payments");
-const { login, register } = require("./utils/database");
+const {
+  login,
+  register,
+  getProducts,
+  getProduct,
+  getProductImage,
+} = require("./utils/database");
 
 const app = express();
 const port = 3000;
@@ -30,26 +36,26 @@ app.get("/api/dati", async (req, res) => {
   }
 });
 
-// TODO: spostare il core delle funzioni nel modulo database.js in ./utils
+// SEZIONE UTENTI
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   const result = await login(username, password);
 
   if (result.success) {
-    return result.status(200).json({ success: true, user: result.user });
+    return res.status(200).json({ success: true, user: result.user });
   }
 
   switch (result.message) {
     case "not_found":
-      return result
+      return res
         .status(401)
         .json({ success: false, message: "Utente non trovato" });
     case "wrong_password":
-      return result
+      return res
         .status(401)
         .json({ success: false, message: "Password errata" });
     default:
-      return result
+      return res
         .status(500)
         .json({ success: false, message: "Errore interno del server" });
   }
@@ -60,21 +66,37 @@ app.post("/api/register", async (req, res) => {
   const result = await register(username, password, email);
 
   if (result.success) {
-    return result.status(200).json({ success: true, user: result.user });
+    return res.status(200).json({ success: true, user: result.user });
   } else if (result.message === "user_already_exists") {
-    return result
-      .status(401)
-      .json({
-        success: false,
-        message: "Un utente con questo username è già esistente",
-      });
+    return res.status(401).json({
+      success: false,
+      message: "Un utente con questo username è già esistente",
+    });
   } else {
-    return result
+    return res
       .status(500)
       .json({ success: false, message: "Errore interno del server" });
   }
 });
 
+// SEZIONE PRODOTTI
+app.get("/api/products", async (req, res) => {
+  /* Esempio richiesta API
+    GET /api/products?categoria=abbigliamento&prezzo_min=50&disponibilita=100&limit=10
+    req.query sarà { categoria: 'abbigliamento', prezzo_min: '50', disponibilita: '100', limit: '10' }
+  */
+  try {
+    const products = await getProducts(req);
+    return res.status(200).json({ success: true, products: products }); // products contiene l'array dei prodotti
+  } catch (error) {
+    console.error("Errore durante il recupero dei prodotti:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+// SEZIONE DI TEST (DA RIMUOVERE IN SEGUITO)
 app.get("/api/test/stripe/balance", async (req, res) => {
   getBalance()
     .then((balance) => {
