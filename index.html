@@ -11,35 +11,31 @@
 <body>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm fixed-top">
-    <div class="navbar-container w-100">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm fixed-top py-3">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
       <a class="navbar-brand" href="#">
         <i class="fa-solid fa-store"></i> Artigianato Online
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-              data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-              aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
 
-      <div class="collapse navbar-collapse w-100" id="navbarNav">
-        <ul class="navbar-nav d-flex flex-row justify-content-between w-100 px-4">
-          <li class="nav-item">
-            <button class="nav-btn">Catalogo</button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-btn" onclick="openLoginOverlay()">Accedi</button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-btn nav-btn-primary" onclick="openRegisterOverlay()">Registrati</button>
-          </li>
-        </ul>
+      <div id="navButtons" class="d-flex gap-2">
+        <button class="nav-btn">Catalogo</button>
+        <button class="nav-btn" onclick="openLoginOverlay()">Accedi</button>
+        <button class="nav-btn nav-btn-primary" onclick="openRegisterOverlay()">Registrati</button>
+      </div>
+
+      <div id="userIconContainer" class="d-none" style="display: none">
+        <button id="userAreaBtn" class="nav-btn user-area-btn" title="Area personale">
+          <i class="fa-solid fa-user"></i>
+        </button>
+        <button id="cartBtn" class="nav-btn user-area-btn" onclick="openCart()" title="Carrello">
+          <div class="icon-container">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span id="cartCountBadge" class="cart-badge"></span>
+          </div>
+        </button>
       </div>
     </div>
-  </nav>
-
-  <!-- Bottone fluttuante per il carrello -->
-  <button id="floatingCartBtn" onclick="openCart()">🛒</button>
+  </nav> 
 
   <!-- Hero -->
   <header class="header" >
@@ -49,117 +45,123 @@
     </div>
   </header>
 
-<div class="product-grid" id="productGrid">
-  <!-- I prodotti vengono inseriti qua dinamicamente -->
-</div>
+  <div class="product-grid" id="productGrid">
+    <!-- I prodotti vengono inseriti qua dinamicamente -->
+  </div>
 
-<!-- Overlay per dettagli prodotto -->
-<div id="productOverlay" class="product-overlay">
-  <!-- Freccia a sinistra -->
-  <div class="overlay-arrow left" onclick="showPreviousProduct()">&#10094;</div>
+  <!-- Overlay per dettagli prodotto -->
+  <div id="productOverlay" class="product-overlay">
+    <!-- Freccia a sinistra -->
+    <div class="overlay-arrow left" onclick="showPreviousProduct()">&#10094;</div>
 
-  <!-- Contenuto dell'overlay -->
-  <div class="product-overlay-content">
-    <span class="close-btn" onclick="closeOverlay()">&times;</span>
-    <div id="overlayCarousel" class="image-carousel"></div>
-      <div id="imageModal" class="image-modal" onclick="closeImageModal()">
-        <img id="modalImage" src="" alt="Immagine ingrandita" />
+    <!-- Contenuto dell'overlay -->
+    <div class="product-overlay-content">
+      <span class="close-btn" onclick="closeOverlay()">&times;</span>
+      <div id="overlayCarousel" class="image-carousel"></div>
+        <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+          <img id="modalImage" src="" alt="Immagine ingrandita" />
+        </div>
+      <h2 id="productOverlayTitle" class="product-overlay-title"></h2>    
+      <div id="productOverlayDescription" class="product-overlay-description"></div>
+      <div id="productOverlayPrice" class="product-overlay-price"></div>
+      <div id="productOverlayAvailability" class="product-overlay-availability"></div>
+      <div class="cart-action">
+      <div id="quantitySelectionContainer" class="quantity-selector">
+        <button onclick="changeQuantity(-1)">−</button>
+        <input 
+          type="number"
+          id="quantityInput"
+          class="quantity-input"
+          value="1"
+          min="1"
+          readonly
+        />
+        <small class="error-msg text-danger quantity-error" style="display: none;"></small>
+        <button onclick="changeQuantity(1)">+</button>
       </div>
-    <h2 id="productOverlayTitle" class="product-overlay-title"></h2>    
-    <div id="productOverlayDescription" class="product-overlay-description"></div>
-    <div id="productOverlayPrice" class="product-overlay-price"></div>
-    <div id="productOverlayAvailability" class="product-overlay-availability"></div>
-    <div class="cart-action">
-    <div class="quantity-selector">
-      <button onclick="changeQuantity(-1)">−</button>
-      <input type="number" id="quantityInput" value="1" min="1">
-      <button onclick="changeQuantity(1)">+</button>
+      <button id="addToCartBtn" class="add-to-cart-btn hidden" onclick="addToCart()">Aggiungi al carrello</button>
     </div>
-    <button class="add-to-cart-btn" onclick="checkLoginStatus()">Aggiungi al carrello</button>
-  </div>
-    <div id="productOverlayError" class="error-msg"></div>
-  </div>
-  <div id="cartPopup" class="cart-popup">✅ Aggiunto al carrello!</div>
-  <!-- Freccia a destra -->
-  <div class="overlay-arrow right" onclick="showNextProduct()">&#10095;</div>
-</div>
-
-<!-- Footer -->
-<footer class="text-center py-4 bg-light border-top">
-  <div class="container">
-    <small>&copy; 2025 Artigianato Online. Tutti i diritti riservati.</small>
-  </div>
-  </footer>
-
-<!-- Overlay Login -->
-<div id="loginOverlay" class="overlay-container hidden">
-  <div class="login-overlay-content">
-    <span class="close-btn" onclick="closeLoginOverlay()">&times;</span>
-    <h2>Accedi</h2>
-    <form class="login-form" id="loginForm">
-      <input type="text" id="loginUsername" placeholder="Nome utente o Email" required />
-      <input type="password" id="loginPassword" placeholder="Password" required />
-      <button type="submit">Accedi</button>
-      
-      <div id="loginError" class="error-msg"></div>
-    </form>
-    <a onclick="closeLoginOverlay(); openRegisterOverlay()"><u>Non hai ancora un account? Registrati</u></a>
-  </div>
-</div>
-
-<!-- Overlay Registrazione -->
-<div id="registerOverlay" class="overlay-container hidden">
-  <div class="register-overlay-content">
-  <span class="close-btn" onclick="closeRegisterOverlay()">&times;</span>
-
-    <!-- Selezione ruolo -->
-    <div id="registerRoleSelection" class="register-overlay-section">
-      <h2 class="register-title">Sei nuovo qui? Registrati come...</h2>
-      <div class="register-button-group">
-        <button id="clienteBtn" class="register-user-button role-cliente">
-          <i class="fa-solid fa-user"></i><br>Cliente
-        </button>
-        <button id="venditoreBtn" class="register-user-button role-venditore">
-          <i class="fa-solid fa-store"></i><br>Venditore
-        </button>
-      </div>
+      <div id="productOverlayError" class="error-msg"></div>
     </div>
+    <div id="cartPopup" class="cart-popup">✅ Aggiunto al carrello!</div>
+    <!-- Freccia a destra -->
+    <div class="overlay-arrow right" onclick="showNextProduct()">&#10095;</div>
+  </div>
 
-    <!-- Form di registrazione -->
-    <div id="registerFormOverlay" class="form hidden">
-      <span class="back-btn" onclick="showRoleSelection()">&#10094;</span>
-      <h2 class="register-title-form" id="formTitle">Registrazione</h2>
-      <form id="formRegistrazione">
-        <input type="text" id="inputUsername" placeholder="" />
-        <input type="email" id="inputEmail" placeholder="Email" />
-        <input type="tel" id="inputTelefono" placeholder="Telefono" />
-        <input type="text" id="inputIndirizzo" placeholder="Indirizzo" />
-        <input type="password" id="inputPassword" placeholder="Password" />
-        <div class="error-message" id="formError"></div>
-        <button type="submit" class="register-submit">Registrati</button>
+  <!-- Footer -->
+  <footer class="text-center py-4 bg-light border-top">
+    <div class="container">
+      <small>&copy; 2025 Artigianato Online. Tutti i diritti riservati.</small>
+    </div>
+    </footer>
+
+  <!-- Overlay Login -->
+  <div id="loginOverlay" class="overlay-container hidden">
+    <div class="login-overlay-content">
+      <span class="close-btn" onclick="closeLoginOverlay()">&times;</span>
+      <h2>Accedi</h2>
+      <form class="login-form" id="loginForm">
+        <input type="text" id="loginUsername" placeholder="Nome utente o Email" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit">Accedi</button>
+        <div id="loginError" class="error-msg"></div>
       </form>
+      <a onclick="closeLoginOverlay(); openRegisterOverlay()"><u>Non hai ancora un account? Registrati</u></a>
     </div>
   </div>
-</div>
 
-<!-- Carrello -->
-<div id="cartContainer">
-  <h2>🛒 Il tuo carrello</h2>
-  <button class="cart-close-btn" onclick="closeCart()">&gg;</button>
-  <div id="cartItems" class="cart-items">
-    <!-- I prodotti verranno inseriti dinamicamente da cartManager.js -->
+  <!-- Overlay Registrazione -->
+  <div id="registerOverlay" class="overlay-container hidden">
+    <div class="register-overlay-content">
+      <span class="close-btn" onclick="closeRegisterOverlay()">&times;</span>
+
+      <!-- Selezione ruolo -->
+      <div id="registerRoleSelection" class="register-overlay-section">
+        <h2 class="register-title">Sei nuovo qui? Registrati come...</h2>
+        <div class="register-button-group">
+          <button id="clienteBtn" class="register-user-button role-cliente">
+            <i class="fa-solid fa-user"></i><br>Cliente
+          </button>
+          <button id="venditoreBtn" class="register-user-button role-venditore">
+            <i class="fa-solid fa-store"></i><br>Venditore
+          </button>
+        </div>
+      </div>
+
+      <!-- Form di registrazione -->
+      <div id="registerFormOverlay" class="form hidden">
+        <span class="back-btn" onclick="showRoleSelection()">&#10094;</span>
+        <h2 class="register-title-form" id="formTitle">Registrazione</h2>
+        <form id="formRegistrazione">
+          <input type="text" id="inputUsername" placeholder="" />
+          <input type="email" id="inputEmail" placeholder="Email" />
+          <input type="tel" id="inputTelefono" placeholder="Telefono" />
+          <input type="text" id="inputIndirizzo" placeholder="Indirizzo" />
+          <input type="password" id="inputPassword" placeholder="Password" />
+          <div class="error-message" id="formError"></div>
+          <button type="submit" class="register-submit">Registrati</button>
+        </form>
+      </div>
+    </div>
   </div>
 
-  <div class="cart-summary">
-    <p id="cartTotal">Totale: €0,00</p>
-    <button class="checkout-btn">Procedi al pagamento</button>
-  </div>
-</div>
+  <!-- Carrello -->
+  <div id="cartContainer">
+    <h2>🛒 Il tuo carrello</h2>
+    <button class="cart-close-btn" onclick="closeCart()">&gg;</button>
+    <div id="cartItems" class="cart-items">
+      <!-- I prodotti verranno inseriti dinamicamente da cartManager.js -->
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="main.js"></script>
+    <div class="cart-summary">
+      <p id="cartTotal">Totale: €0,00</p>
+      <button class="checkout-btn">Procedi al pagamento</button>
+    </div>
+  </div>
+
+  <script src="reglog.js"></script>
   <script src="productsDisplay.js"></script>
   <script src="cartManager.js"></script>
-  <script src="reglog.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

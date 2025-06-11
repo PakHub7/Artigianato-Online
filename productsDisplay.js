@@ -27,7 +27,7 @@ let products = [
     nome: "Orecchini in argento",
     descrizione: "Creati da artigiani locali con argento di Bronte",
     prezzo: "60.00",
-    disponibilita: 5,
+    disponibilita: 3,
     artigiano_id: 5,
     categoria_id: 3,
     immagini_url: ["product3.jpg","product1.jpg","product2.jpg"],
@@ -59,10 +59,7 @@ function openOverlay(index) {
   carousel.className = "image-carousel";
   carousel.innerHTML = "";
 
-  const images = Array.isArray(product.immagini_url)
-    ? product.immagini_url
-    : [product.immagini_url]; 
-
+  const images = Array.isArray(product.immagini_url) ? product.immagini_url : [product.immagini_url]; 
   images.slice(0, 5).forEach(url => {
     const img = document.createElement("img");
     img.src = url;
@@ -71,30 +68,35 @@ function openOverlay(index) {
     carousel.appendChild(img);
   });
 
-  // Titolo
   document.getElementById("productOverlayTitle").textContent = product.nome;
-
-  // Descrizione + Artigiano
   document.getElementById("productOverlayDescription").innerHTML = `
     <p>${product.descrizione}</p>
-    <p><small>Scopri il venditore: ${product.artigiano_id}</small></p>`; // Qui va collegato al profilo dell'artigiano
-
-  // Prezzo
+    <p><small>Scopri il venditore: ${product.artigiano_id}</small></p>`;
   document.getElementById("productOverlayPrice").textContent = `${parseFloat(product.prezzo).toFixed(2)} €`;
 
-  // Disponibilità
-  document.getElementById("productOverlayAvailability").textContent =
-    `Disponibilità: ${product.disponibilita > 0 ? product.disponibilita + ' pezzi' : 'Non disponibile'}`;
+  // Calcolo quantità disponibili in base al carrello
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const cartItem = cart.find(item => item.id === product.id);
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
 
-  // Mostra overlay con classe CSS
-  const overlay = document.getElementById("productOverlay");
-  overlay.classList.add("show");
+  document.getElementById("productOverlayAvailability").textContent =
+    product.disponibilita > 0 ? `Disponibilità: ${product.disponibilita} pezzi` : 'Non disponibile';
+
+  document.getElementById("quantitySelectionContainer").classList.toggle("hidden", product.disponibilita <= 0);
+  document.getElementById("addToCartBtn").classList.toggle("hidden", product.disponibilita <= 0);
+
+  const inputQty = document.getElementById("quantityInput");
+  inputQty.value = "1";
+  inputQty.setAttribute("data-max", product.disponibilita);
+
+  document.getElementById("productOverlay").classList.add("show");
 
   updateArrowVisibility();
 }
 
 // Chiusura overlay
 function closeOverlay() {
+  changeQuantity(0);
   document.getElementById("productOverlay").classList.remove("show");
 }
 
@@ -105,7 +107,7 @@ document.getElementById("productOverlay").addEventListener("click", function (ev
   }
 });
 
-// Mosrtra il modal per l'immagine
+// Mostra il modal per l'immagine
 function openImageModal(src) {
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImage");
@@ -116,19 +118,25 @@ function openImageModal(src) {
 function closeImageModal() {
   document.getElementById("imageModal").style.display = "none";
 }
-// Gestione dei bottoni per navigare tra i prodotti
+
+// Mostra il prodotto precedente
 function showPreviousProduct() {
+  
   if (currentProductIndex > 0) {
+    changeQuantity(0); // Resetta la quantità a 1
     openOverlay(currentProductIndex - 1);
   }
 }
 
+// Mostra il prodotto successivo
 function showNextProduct() {
   if (currentProductIndex < products.length - 1) {
+    changeQuantity(0); // Resetta la quantità a 1
     openOverlay(currentProductIndex + 1);
   }
 }
 
+// Gestione delle frecce di navigazione
 function updateArrowVisibility() {
   const leftArrow = document.querySelector(".overlay-arrow.left");
   const rightArrow = document.querySelector(".overlay-arrow.right");
@@ -136,11 +144,34 @@ function updateArrowVisibility() {
   leftArrow.classList.toggle("hidden", currentProductIndex <= 0);
   rightArrow.classList.toggle("hidden", currentProductIndex >= products.length - 1);
 }
+
+// Gestione della quantità
 function changeQuantity(delta) {
   const input = document.getElementById("quantityInput");
+  const max = parseInt(input.dataset.max);
   let newVal = parseInt(input.value) + delta;
-  if (newVal < 1) newVal = 1;
+  if (isNaN(newVal) || newVal < 1) newVal = 1;
+  if (newVal > max) newVal = max;
   input.value = newVal;
+  validateQuantityInput();
 }
 
+// Validazione dell'input della quantità
+function validateQuantityInput() {
+  const input = document.getElementById("quantityInput");
+  const errorMsg = input.parentElement.querySelector(".error-msg");
+  const maxAvailable = parseInt(input.dataset.max);
+  let val = parseInt(input.value);
 
+  if (isNaN(val) || val < 1) {
+    input.value = 1;
+    errorMsg.style.display = "none";
+    errorMsg.textContent = "";
+  } else if (val > maxAvailable) {
+    input.value = maxAvailable;
+    errorMsg.style.display = "block";
+  } else {
+    errorMsg.style.display = "none";
+    errorMsg.textContent = "";
+  }
+}

@@ -40,9 +40,11 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        closeLoginOverlay();
-        console.log("Login effettuato:", data.user);
-      } else {
+      localStorage.setItem("loggedInUser", JSON.stringify(data.user)); // Salvataggio
+      closeLoginOverlay();
+      updateNavbarForLogin();
+      console.log("Login effettuato:", data.user);
+    } else {
         errorDiv.textContent = data.message || "Credenziali non valide.";
       }
     })
@@ -142,6 +144,7 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
     .then(response => {
       if (response.success) {
         closeRegisterOverlay();
+        updateNavbarForLogin();
         console.log(`${ruoloSelezionato} registrato con successo`);
       } else {
         errorDiv.textContent = response.message || "Registrazione fallita.";
@@ -151,3 +154,30 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
       errorDiv.textContent = "Errore di rete.";
     });
 });
+
+// --------- CHECK LOGIN STATUS ---------
+function checkStatus() {
+  return localStorage.getItem("loggedInUser") !== null;
+}
+
+// --------- LOGOUT ---------
+function logoutUser() {
+  localStorage.removeItem("loggedInUser");
+  updateNavbarForLogin();;
+};
+
+// --------- NAVBAR UPDATE ---------
+function updateNavbarForLogin() {
+  const navButtons = document.getElementById("navButtons");
+  const userIconContainer = document.getElementById("userIconContainer");
+
+  if (checkStatus()) {
+    navButtons.classList.add("d-none");
+    userIconContainer.classList.remove("d-none");
+    userIconContainer.style.display = "flex"; // Mostra subito
+  } else {
+    navButtons.classList.remove("d-none");
+    userIconContainer.classList.add("d-none");
+    userIconContainer.style.display = "none"; // Nasconde subito
+  }
+}
