@@ -68,7 +68,7 @@ app.post("/api/register", async (req, res) => {
   if (result.success) {
     return res.status(200).json({ success: true, user: result.user });
   } else if (result.message === "user_already_exists") {
-    return res.status(401).json({
+    return res.status(409).json({
       success: false,
       message: "Un utente con questo username è già esistente",
     });
