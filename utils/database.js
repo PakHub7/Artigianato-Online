@@ -123,40 +123,37 @@ async function getProductImage() {
   // get 1 or all
 }
 
-// // comando = {}
 // ottenere 1 sola immagine per la vetrina
-async function getProducts(req) {
+async function getProducts(filters = {}) {
   // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri
-  const comando = req ? req.query : {}; // Se req è undefined, usa un oggetto vuoto
-
   let query = "SELECT id, nome, prezzo FROM prodotti";
   const valori = [];
   const conditions = [];
   let i = 1;
 
-  // Controlla se ci sono parametri nel 'comando'
-  if (Object.keys(comando).length > 0) {
-    if ("categoria" in comando) {
+  // Controlla se ci sono parametri in 'filters'
+  if (Object.keys(filters).length > 0) {
+    if ("categoria" in filters) {
       conditions.push(`categoria = $${i}`);
-      valori.push(comando["categoria"]);
+      valori.push(filters["categoria"]);
       i++;
     }
 
-    if ("prezzo_min" in comando) {
+    if ("prezzo_min" in filters) {
       conditions.push(`prezzo >= $${i}`);
-      valori.push(parseFloat(comando["prezzo_min"]));
+      valori.push(parseFloat(filters["prezzo_min"]));
       i++;
     }
 
-    if ("prezzo_max" in comando) {
+    if ("prezzo_max" in filters) {
       conditions.push(`prezzo <= $${i}`);
-      valori.push(parseFloat(comando["prezzo_max"]));
+      valori.push(parseFloat(filters["prezzo_max"]));
       i++;
     }
 
-    if ("disponibilita" in comando) {
+    if ("disponibilita" in filters) {
       conditions.push(`disponibilita >= $${i}`); // Mostra solo prodotti con almeno X unità disponibili
-      valori.push(parseInt(comando["disponibilita"]));
+      valori.push(parseInt(filters["disponibilita"]));
       i++;
     }
 
@@ -164,8 +161,8 @@ async function getProducts(req) {
       query += " WHERE " + conditions.join(" AND ");
     }
 
-    if ("limit" in comando && typeof comando.limit === "string") {
-      const limite = parseInt(comando.limit);
+    if ("limit" in filters && typeof filters.limit === "string") {
+      const limite = parseInt(filters.limit);
       query += ` LIMIT $${i}`;
       // Assicurarsi che sia un numero valido
       if (!isNaN(limite)) {
@@ -183,19 +180,27 @@ async function getProducts(req) {
     );
     return result.rows;
   } catch (error) {
-    console.error("Error executing query:", error);
-    throw error; // sostituire con un return { success: false, message: "" };
+    console.error("Error executing query: ", error);
+    // throw error; // sostituire con un return { success: false, message: "" }; - fatto
+    return { success: false, message: "server_error" };
   }
 }
 
 async function getProduct(id) {
   // manca la funzione per prendere tutte le immagini del prodotto, capire come vogliono gestirle + salvarle (path, url o blob)
-  const result = await pool.query("SELECT * FROM prodotti WHERE id = $1", [id]);
-  const product = result.rows[0];
-  if (!product) {
-    return { success: false, message: "product_not_found" };
+  try {
+    const result = await pool.query("SELECT * FROM prodotti WHERE id = $1", [
+      id,
+    ]);
+    const product = result.rows[0];
+    if (!product) {
+      return { success: false, message: "product_not_found" };
+    }
+    return { success: true, product: product };
+  } catch (error) {
+    console.error("Error executing query: ", error);
+    return { success: false, message: "server_error" };
   }
-  return product;
 }
 
 // SEZIONE ORDINI / CARRELLO

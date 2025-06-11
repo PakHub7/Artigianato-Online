@@ -39,40 +39,66 @@ app.get("/api/dati", async (req, res) => {
 // SEZIONE UTENTI
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-  const result = await login(username, password);
-
-  if (result.success) {
-    return res.status(200).json({ success: true, user: result.user });
+  if (!username || !password || !email) {
+    return res.status(400).json({
+      success: false,
+      message: "Username, password ed email sono obbligatori",
+    });
   }
 
-  switch (result.message) {
-    case "not_found":
-      return res
-        .status(401)
-        .json({ success: false, message: "Utente non trovato" });
-    case "wrong_password":
-      return res
-        .status(401)
-        .json({ success: false, message: "Password errata" });
-    default:
-      return res
-        .status(500)
-        .json({ success: false, message: "Errore interno del server" });
+  try {
+    const result = await login(username, password);
+
+    if (result.success) {
+      return res.status(200).json({ success: true, user: result.user });
+    }
+
+    switch (result.message) {
+      case "not_found":
+        return res
+          .status(401)
+          .json({ success: false, message: "Utente non trovato" });
+      case "wrong_password":
+        return res
+          .status(401)
+          .json({ success: false, message: "Password errata" });
+      default:
+        return res
+          .status(500)
+          .json({ success: false, message: "Errore interno del server" });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
   }
 });
 
 app.post("/api/register", async (req, res) => {
   const { username, password, email } = req.body;
-  const result = await register(username, password, email);
-
-  if (result.success) {
-    return res.status(200).json({ success: true, user: result.user });
-  } else if (result.message === "user_already_exists") {
-    return res.status(409).json({
+  if (!username || !password || !email) {
+    return res.status(400).json({
       success: false,
-      message: "Un utente con questo username è già esistente",
+      message: "Username, password ed email sono obbligatori",
     });
-  } else {
+  }
+
+  try {
+    const result = await register(username, password, email);
+
+    if (result.success) {
+      return res.status(201).json({ success: true, user: result.user });
+    } else if (result.message === "user_already_exists") {
+      return res.status(409).json({
+        success: false,
+        message: "Un utente con questo username è già esistente",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ success: false, message: "Errore interno del server" });
+    }
+  } catch (error) {
     return res
       .status(500)
       .json({ success: false, message: "Errore interno del server" });
@@ -107,7 +133,8 @@ app.get("/api/products", async (req, res) => {
     }
   */
   try {
-    const products = await getProducts(req);
+    const filters = req.query;
+    const products = await getProducts(filters);
     if (products.success) {
       return res.status(200).json({ success: true, products: products }); // products contiene l'array dei prodotti
     } else {
@@ -117,6 +144,35 @@ app.get("/api/products", async (req, res) => {
     }
   } catch (error) {
     console.error("Errore durante il recupero dei prodotti:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+app.get("/api/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id; // Estrazione ID prodotto dai parametri della query
+    // req.params.id con path/:id (esempio: path/123) è utile in questo caso perché serve solo il parametro id, ovvero un parametro specifico
+    // req.query invece è utile nel caso dei filtri (path?filtro1=A&filtro2=B) poiché sono facoltativi ed è così più facile gestirli
+
+    if (isNaN(id) || parseInt(id) <= 0) {
+      return req
+        .status(400)
+        .json({ success: false, message: "ID prodotto non valido" });
+    }
+
+    const result = await getProduct(id);
+
+    if (result.success) {
+      return res.status(200).json({ success: true, product: result.product });
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: "Prodotto non trovato" });
+    }
+  } catch (error) {
+    console.error("Errore durante il recupero del prodotto: ", error);
     return res
       .status(500)
       .json({ success: false, message: "Errore interno del server" });
