@@ -98,16 +98,16 @@
   ```
 
 # **PRODOTTO**
-## GET /api/products (TODO: modificare per dare la possibilità di cercare più categorie)
+## GET /api/products
   ### Esempio:
   ```
-  /api/products?categoria=abbigliamento&prezzo_min=50&disponibilita=100&limit=10
+  /api/products?categoria=abbigliamento&categoria=gioielli&prezzo_min=50&disponibilita=100&limit=10
   ```
 
   ### *Parametri url:*
   ``` JSON
   {
-      "categoria": "string (opzionale, es. 'arredamento', 'gioielli')",
+      "categoria": "array (opzionale, es. ['arredamento', 'gioielli'])",
       "prezzo_min": "number (opzionale, es. 50, 100.50)",
       "prezzo_max": "number (opzionale, es. 200, 75.99)",
       "disponibilita": "integer (opzionale, es. 10, 50 - mostra prodotti con almeno X unità disponibili)",

@@ -134,8 +134,11 @@ async function getProducts(filters = {}) {
   // Controlla se ci sono parametri in 'filters'
   if (Object.keys(filters).length > 0) {
     if ("categoria" in filters) {
-      conditions.push(`categoria = $${i}`);
-      valori.push(filters["categoria"]);
+      const categorie = Array.isArray(filters["categoria"])
+        ? filters["categoria"]
+        : [filters["categoria"]];
+      conditions.push(`categoria = ANY($${i})`);
+      valori.push(categorie);
       i++;
     }
 
