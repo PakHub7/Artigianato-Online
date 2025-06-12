@@ -7,6 +7,7 @@ const { getBalance } = require("./utils/payments");
 const {
   login,
   register,
+  getUser,
   getProducts,
   getProduct,
   getProductImage,
@@ -93,6 +94,37 @@ app.post("/api/register", async (req, res) => {
         success: false,
         message: "Un utente con questo username è già esistente",
       });
+    } else {
+      return res
+        .status(500)
+        .json({ success: false, message: "Errore interno del server" });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+app.get("/api/user/:username", async (req, res) => {
+  try {
+    const regex = /[!@#$%^&*()\-+={}[\]:;"'<>,.?\/|\\]/;
+    const username = req.query.username;
+
+    if (regex.test(username)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Sono presenti caratteri speciali" });
+    }
+
+    result = await getUser(username);
+
+    if (result.success) {
+      return res.status(200).json({ success: true, user: result.user });
+    } else if (result.message === "not_found") {
+      return res
+        .status(401)
+        .json({ success: false, message: "Utente non trovato" });
     } else {
       return res
         .status(500)

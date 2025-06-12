@@ -1,7 +1,7 @@
 # Artigianato-Online - TODO
 
 ## UTENTI - tutti
-- show full user
+- show full user - FATTO
 - edit user (username, password, telefono, indirizzo) | [email NO]
 - remove user (cascade prodotti)
 

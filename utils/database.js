@@ -11,24 +11,30 @@ const pool = new Pool({
 });
 
 // SEZIONE UTENTI
-async function userExists(username) {
-  const result = await pool.query("SELECT * FROM utenti WHERE username = $1", [
-    username,
-  ]);
+async function getUser(username) {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM utenti WHERE username = $1",
+      [username],
+    );
 
-  if (result.rows.length === 0) {
-    return false;
+    if (result.rows.length === 0) {
+      return { success: false, message: "not_found" };
+    }
+
+    const user = result.rows[0];
+    return { success: true, user: user };
+  } catch (error) {
+    console.error("Errore nella query: ", error);
+    return { success: false, message: "server_error" };
   }
-
-  const user = result.rows[0];
-  return user;
 }
 
 async function login(username, password) {
   try {
-    const user = await userExists(username);
+    const user = await getUser(username);
 
-    if (user) {
+    if (user.success) {
       const match = await bcrypt.compare(password, user.password_hash);
 
       if (match) {
@@ -63,9 +69,9 @@ async function register(username, password, email, indirizzo, ruolo) {
       });
     }
 
-    const user = await userExists(username);
+    const user = await getUser(username);
 
-    if (!user) {
+    if (!user.success) {
       const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
       const result = await pool.query(
         "INSERT INTO utenti (username, password_hash, email, indirizzo, ruolo) VALUES ($1, $2, $3, $4, $5)",
@@ -88,34 +94,6 @@ async function register(username, password, email, indirizzo, ruolo) {
     console.error("Errore: ", err);
     return { success: false, message: "server_error", error: err };
   }
-
-  /* da spostare e sistemare in API.js
-  try {
-    // Verifica che l'utente non esista già
-    const existing = await pool.query(
-      "SELECT * FROM utenti WHERE username = $1",
-      [username],
-    );
-    if (existing.rows.length > 0) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Username già in uso" });
-    }
-
-    // Crea hash della password
-    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    // Inserisce il nuovo utente
-    await pool.query(
-      "INSERT INTO utenti (username, password_hash, email) VALUES ($1, $2, $3)",
-      [username, password_hash, email || null],
-    );
-
-    res.json({ success: true, message: "Registrazione avvenuta con successo" });
-  } catch (err) {
-    console.error("Errore nella registrazione:", err);
-    res.status(500).json({ success: false, message: "Errore del server" });
-    } */
 }
 
 // SEZIONE PRODOTTI
@@ -228,4 +206,11 @@ async function lockProducts() {}
 
 // SEZIONE PAGAMENTI
 
-module.exports = { login, register, getProductImage, getProduct, getProducts };
+module.exports = {
+  login,
+  register,
+  getUser,
+  getProductImage,
+  getProduct,
+  getProducts,
+};
