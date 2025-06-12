@@ -8,9 +8,11 @@ const {
   login,
   register,
   getUser,
+  updateUser,
   getProducts,
   getProduct,
   getProductImage,
+  updateUser,
 } = require("./utils/database");
 
 const app = express();
@@ -129,6 +131,24 @@ app.get("/api/user/:username", async (req, res) => {
       return res
         .status(500)
         .json({ success: false, message: "Errore interno del server" });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+app.post("/api/user/update", async (req, res) => {
+  try {
+    const result = await updateUser();
+
+    if (result.success) {
+      return res.status(200).json({ success: true, user: result.user });
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utente non trovato" });
     }
   } catch (error) {
     return res

@@ -12,6 +12,7 @@ const pool = new Pool({
 
 // SEZIONE UTENTI
 async function getUser(username) {
+  // TODO: se serve aggiungere la possibilità di cercare un utente tramite ID, se non serve non si fa
   try {
     const result = await pool.query(
       "SELECT * FROM utenti WHERE username = $1",
@@ -26,6 +27,40 @@ async function getUser(username) {
     return { success: true, user: user };
   } catch (error) {
     console.error("Errore nella query: ", error);
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function updateUser(id, username, password, telefono, indirizzo) {
+  try {
+    const result = await pool.query(
+      "UPDATE utenti SET username=$1, password=$2, telefono=$3, indirizzo=$4 WHERE id=$5",
+      [username, password, telefono, indirizzo, id],
+    );
+
+    if (result.rowCount > 0) {
+      user = await getUser(username);
+      return { success: true, user: user };
+    } else {
+      return { success: false, message: "not_found" };
+    }
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function deleteUser(username) {
+  try {
+    const result = await pool.query("DELETE FROM utenti WHERE username=$1", [
+      username,
+    ]);
+
+    if (result.rowCount > 0) {
+      return { success: true };
+    } else {
+      return { success: false, message: "not_found" };
+    }
+  } catch (error) {
     return { success: false, message: "server_error" };
   }
 }
@@ -47,6 +82,7 @@ async function login(username, password) {
           // id: user.id, // Non dovrebbe servire nei risultati login/signup ma solo come indicizzazione
           username: user.username,
           email: user.email,
+          telefono: user.telefono,
           indirizzo: user.indirizzo, // è meglio restituirlo solo quando serve, rimuovere in seguito + aggiungerlo come dato per i pagamenti
           role: user.ruolo,
         },
@@ -60,7 +96,7 @@ async function login(username, password) {
   }
 }
 
-async function register(username, password, email, indirizzo, ruolo) {
+async function register(username, password, email, telefono, indirizzo, ruolo) {
   try {
     if (!username || !password) {
       return res.status(400).json({
@@ -83,6 +119,7 @@ async function register(username, password, email, indirizzo, ruolo) {
           // id: user.id, // Non dovrebbe servire nei risultati login/signup ma solo come indicizzazione
           username: username,
           email: email,
+          telefono: telefono,
           indirizzo: indirizzo, // è meglio restituirlo solo quando serve, rimuovere in seguito + aggiungerlo come dato per i pagamenti
           role: ruolo, // TODO: aggiungere il ruolo
         },
@@ -210,6 +247,7 @@ module.exports = {
   login,
   register,
   getUser,
+  updateUser,
   getProductImage,
   getProduct,
   getProducts,
