@@ -2,8 +2,8 @@
 
 ## UTENTI - tutti
 - show full user - FATTO
-- edit user (username, password, telefono, indirizzo) | [email NO]
-- remove user (cascade prodotti)
+- edit user (username, password, telefono, indirizzo) | [email NO] - FATTO
+- remove user (cascade prodotti) - FATTO
 
 ## ADMIN (chiedere ai bro) - alex
 - segnalazioni (capire se serve aggiungere tabella)
