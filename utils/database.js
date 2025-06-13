@@ -133,11 +133,53 @@ async function register(username, password, email, telefono, indirizzo, ruolo) {
   }
 }
 
-// SEZIONE PRODOTTI
-async function getProductImage() {
-  // get 1 or all
+// SEZIONE IMMAGINI
+async function getProductImage(id, max = 0) {
+  // get N (max=N) or all (max=0)
+  // TODO: sostituire url sia qui sia nella tabella immagini con img o simili
+  let query = `
+    SELECT img
+    FROM immagini
+    JOIN prodotti ON immagini.idProd = prodotti.id
+    WHERE prodotti.id = $1
+  `;
+
+  const params = [id];
+
+  if (max > 0) {
+    query += " LIMIT $2";
+    params.push(max);
+  } else if (max < 0) {
+    return { success: false, message: "invalid_max_value" };
+  }
+
+  try {
+    const result = await pool.query(query, params);
+    if (result.rows.length) {
+      return { success: true, images: result.rows }; // TODO: chiedere se vogliono tutta la riga o solo la colonna con il nome dell'img
+    } else {
+      return { success: false, message: "no_rows" };
+    }
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
 }
 
+async function addProductImage(id, image) {
+  try {
+    const result = await pool.query(
+      "INSERT INTO immagini (idProd, img) VALUES ($1, $2) RETURNING *",
+      [id, image],
+    );
+    if (result.rows.rowCount) {
+      return { success: true, image: result.rows };
+    }
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
+// SEZIONE PRODOTTI
 // ottenere 1 sola immagine per la vetrina
 async function getProducts(filters = {}) {
   // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri

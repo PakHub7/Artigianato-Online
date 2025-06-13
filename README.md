@@ -1,5 +1,8 @@
 # Artigianato-Online - TODO
 
+## GENERALE - tutti
+- gestire i ruoli per ogni tipo di query (es. solo gli admin e possono eliminare )
+
 ## UTENTI - tutti
 - show full user - FATTO
 - edit user (username, password, telefono, indirizzo) | [email NO] - FATTO
