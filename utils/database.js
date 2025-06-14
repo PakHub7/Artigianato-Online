@@ -140,8 +140,7 @@ async function getProductImage(id, max = 0) {
   let query = `
     SELECT img
     FROM immagini
-    JOIN prodotti ON immagini.idProd = prodotti.id
-    WHERE prodotti.id = $1
+    WHERE idProd = $1
   `;
 
   const params = [id];
@@ -182,6 +181,11 @@ async function addProductImage(id, image) {
 async function deleteImage(id) {
   try {
     const result = await pool.query("DELETE FROM immagini WHERE id=$1", [id]);
+    if (result.rowCount > 0) {
+      return { success: true };
+    } else {
+      return { success: false, message: "not_found" };
+    }
   } catch (error) {
     return { success: false, message: "server_error" };
   }
@@ -271,6 +275,127 @@ async function getProduct(id) {
   }
 }
 
+async function addProduct(nome, categoria, descrizione, prezzo, disponibilita, idVenditore) {
+  const existing = await pool.query(
+      "SELECT * FROM prodotti WHERE nome = $1 AND idVenditore = $2",
+      [nome, idVenditore]
+  );
+
+  if (existing.rows.length > 0) {
+    return { success: false, message: "product_already_exists" };
+  }
+
+  try {
+    const result = await pool.query(
+        "INSERT INTO prodotti (nome, categoria, descrizione, prezzo, disponibilita, idVenditore) VALUES ($1, $2, $3, $4, $5, $6)"
+            [nome, categoria, descrizione, prezzo, disponibilita, idVenditore]
+    );
+
+    return { success: true, product: result.rows[0] };
+  } catch (error) {
+    console.error("Errore nell'aggiunta del prodotto:", error);
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function deleteProduct(id) {//
+  try {
+    const result = await pool.query("DELETE FROM prodotti WHERE id=$1", [
+      id,
+    ]);
+
+    if (result.rowCount > 0) {
+      return { success: true };
+    } else {
+      return { success: false, message: "not_found" };
+    }
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function updateProduct(id,params = {}){
+  let query = "UPDATE prodotti SET";
+  const valori = [];
+  const conditions = [];
+  let i = 1;
+
+  if(Object.keys(params).length > 0){
+    if("descrizione" in params){
+      conditions.push(`descrizione= $${i}`);
+      valori.push(params["descrizione"]);
+      i++;
+    }
+
+    if("prezzo" in params){
+      conditions.push(`prezzo= $${i}`);
+      valori.push(parseFloat(params["prezzo"]));
+      i++;
+    }
+
+    if("disponibilita" in params){
+      conditions.push(`disponibilita= $${i}`);
+      valori.push(parseInt(params["disponibilita"]));
+      i++;
+    }
+
+    if (conditions.length > 0) {
+      query += conditions.join(", ");
+    }
+
+  }else{
+    return { success: false, message: "params_empty" };
+  }
+
+  try {
+    const result = await pool.query(
+        query,
+        valori.length > 0 ? valori : undefined,
+    );
+    if (result.rowCount > 0) {
+      return { success: true };
+    } else {
+      return { success: false, message: "not_found" };
+    }
+  } catch (error) {
+    console.error("Error executing query: ", error);
+    // throw error; // sostituire con un return { success: false, message: "" }; - fatto
+    return { success: false, message: "server_error" };
+  }
+
+}
+
+//SEZIONE VISUALIZZAZIONE ORDINI
+
+async function showOrder(id,ruolo){
+  let query;
+  switch (ruolo){
+    case "cliente":
+      query="SELECT * FROM ordini WHERE cliente_id= $1";
+      break;
+    case "venditore":
+      query="SELECT * FROM ordini WHERE venditore_id= $1";
+      break;
+    //case "admin":
+  }
+  try {const result = await pool.query(
+      query, [id]
+  )
+
+    if (result.rows.length === 0) {
+      return { success: false, message: "not_found" };
+    }
+
+    return {success: true, order: result.rows};
+  }catch(error){
+    console.error("Errore nella query: ", error);
+    return { success: false, message: "server_error" };
+  }
+
+}
+
+
+
 // SEZIONE ORDINI / CARRELLO
 /*
 1. controllo disponibilità ordini
@@ -290,6 +415,13 @@ async function checkAvailablity(ids) {
 }
 
 async function lockProducts() {}
+
+
+
+
+
+
+
 
 // SEZIONE PAGAMENTI
 
