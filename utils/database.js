@@ -179,6 +179,14 @@ async function addProductImage(id, image) {
   }
 }
 
+async function deleteImage(id) {
+  try {
+    const result = await pool.query("DELETE FROM immagini WHERE id=$1", [id]);
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
 // SEZIONE PRODOTTI
 // ottenere 1 sola immagine per la vetrina
 async function getProducts(filters = {}) {

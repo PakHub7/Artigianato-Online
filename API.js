@@ -141,7 +141,14 @@ app.get("/api/user/:username", async (req, res) => {
 
 app.post("/api/user/update", async (req, res) => {
   try {
-    const result = await updateUser();
+    const { id, username, password, telefono, indirizzo } = req.body;
+    const result = await updateUser(
+      id,
+      username,
+      password,
+      telefono,
+      indirizzo,
+    );
 
     if (result.success) {
       return res.status(200).json({ success: true, user: result.user });
@@ -156,6 +163,8 @@ app.post("/api/user/update", async (req, res) => {
       .json({ success: false, message: "Errore interno del server" });
   }
 });
+
+// SEZIONE IMMAGINI
 
 // SEZIONE PRODOTTI
 app.get("/api/products", async (req, res) => {
