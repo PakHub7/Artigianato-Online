@@ -240,6 +240,95 @@ app.get("/api/products/:id", async (req, res) => {
   }
 });
 
+app.post("/api/product/add", async (req, res) => {
+  const { nome, categoria, descrizione, prezzo, disponibilita, idVenditore } = req.body;
+
+  const result = await addProduct(nome, categoria, descrizione, prezzo, disponibilita, idVenditore);
+
+  if (result.success) {
+    return res.status(200).json(result);
+  } else if (result.message === "product_already_exists") {
+    return res.status(409).json(result);
+  } else {
+    return res.status(500).json(result);
+  }
+});
+
+//Api inerente a deleteProduct
+app.post("/api/product/delete", async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const result = await deleteProduct(id);
+
+    if (result.success) {
+      return res.status(200).json({ success: true });
+    } else {
+      return res.status(404).json({ success: false, message: "Prodotto non trovato" });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+//api inerente a updateProduct
+app.post("/api/product/update", async (req, res) => {
+  const { id,descrizione, prezzo, disponibilita } = req.body;
+
+  try {
+    const result = await updateProduct(id, params);
+
+    if (result.success) {
+      return res.status(200).json({ success: true, product: result.product });
+    } else {
+      return res
+          .status(404)
+          .json({ success: false, message: "Prodotto non trovato" });
+    }
+  } catch (error) {
+    return res
+        .status(500)
+        .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+//SEZIONE ORDINI
+
+app.get("api/orders",async (req,res) =>{
+  try {
+    const {id,ruolo}= req.query;
+    //aggiungere controllo variabili
+
+    const result = await showOrder(id,ruolo);
+
+    if (result.success) {
+      return res.status(200).json({ success: true, product: result.product });
+    } else {
+      return res
+          .status(404)
+          .json({ success: false, message: "Ordini non trovati" });
+    }
+  } catch (error) {
+    console.error("Errore durante il recupero degli ordini: ", error);
+    return res
+        .status(500)
+        .json({ success: false, message: "Errore interno del server" });
+  }
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+/*-----------------------------------------------------------------------------------------------------------------*/
 // SEZIONE DI TEST (DA RIMUOVERE IN SEGUITO)
 app.get("/api/test/stripe/balance", async (req, res) => {
   getBalance()
@@ -267,3 +356,4 @@ app.get("/api/test/stripe/balance", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server in ascolto su http://localhost:${port}`);
 });
+
