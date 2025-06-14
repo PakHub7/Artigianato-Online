@@ -12,6 +12,8 @@ const {
   getProducts,
   getProduct,
   getProductImage,
+  addProductImage,
+  deleteProductImage,
   updateUser,
 } = require("./utils/database");
 
@@ -165,6 +167,28 @@ app.post("/api/user/update", async (req, res) => {
 });
 
 // SEZIONE IMMAGINI
+app.get("/api/product/:id/image", async (req, res) => {
+  // es. /api/product/123/image?max=10
+  try {
+    const id = req.params.id;
+    const max = parseInt(req.query.max) || 0;
+    const result = await getProductImage(id, max);
+    if (result.success) {
+      return res.status(200).json({ success: 200, images: result.images });
+    }
+    return res
+      .status(404)
+      .json({ success: false, message: "Prodotto non trovato" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+app.get("/api/product/image/add");
+
+app.get("/api/product/image/:id/delete");
 
 // SEZIONE PRODOTTI
 app.get("/api/products", async (req, res) => {
@@ -241,9 +265,17 @@ app.get("/api/products/:id", async (req, res) => {
 });
 
 app.post("/api/product/add", async (req, res) => {
-  const { nome, categoria, descrizione, prezzo, disponibilita, idVenditore } = req.body;
+  const { nome, categoria, descrizione, prezzo, disponibilita, idVenditore } =
+    req.body;
 
-  const result = await addProduct(nome, categoria, descrizione, prezzo, disponibilita, idVenditore);
+  const result = await addProduct(
+    nome,
+    categoria,
+    descrizione,
+    prezzo,
+    disponibilita,
+    idVenditore,
+  );
 
   if (result.success) {
     return res.status(200).json(result);
@@ -264,16 +296,20 @@ app.post("/api/product/delete", async (req, res) => {
     if (result.success) {
       return res.status(200).json({ success: true });
     } else {
-      return res.status(404).json({ success: false, message: "Prodotto non trovato" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Prodotto non trovato" });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Errore interno del server" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
   }
 });
 
 //api inerente a updateProduct
 app.post("/api/product/update", async (req, res) => {
-  const { id,descrizione, prezzo, disponibilita } = req.body;
+  const { id, descrizione, prezzo, disponibilita } = req.body;
 
   try {
     const result = await updateProduct(id, params);
@@ -282,51 +318,39 @@ app.post("/api/product/update", async (req, res) => {
       return res.status(200).json({ success: true, product: result.product });
     } else {
       return res
-          .status(404)
-          .json({ success: false, message: "Prodotto non trovato" });
+        .status(404)
+        .json({ success: false, message: "Prodotto non trovato" });
     }
   } catch (error) {
     return res
-        .status(500)
-        .json({ success: false, message: "Errore interno del server" });
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
   }
 });
 
 //SEZIONE ORDINI
 
-app.get("api/orders",async (req,res) =>{
+app.get("api/orders", async (req, res) => {
   try {
-    const {id,ruolo}= req.query;
+    const { id, ruolo } = req.query;
     //aggiungere controllo variabili
 
-    const result = await showOrder(id,ruolo);
+    const result = await showOrder(id, ruolo);
 
     if (result.success) {
       return res.status(200).json({ success: true, product: result.product });
     } else {
       return res
-          .status(404)
-          .json({ success: false, message: "Ordini non trovati" });
+        .status(404)
+        .json({ success: false, message: "Ordini non trovati" });
     }
   } catch (error) {
     console.error("Errore durante il recupero degli ordini: ", error);
     return res
-        .status(500)
-        .json({ success: false, message: "Errore interno del server" });
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
   }
-
-
-
-
 });
-
-
-
-
-
-
-
-
 
 /*-----------------------------------------------------------------------------------------------------------------*/
 // SEZIONE DI TEST (DA RIMUOVERE IN SEGUITO)
@@ -356,4 +380,3 @@ app.get("/api/test/stripe/balance", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server in ascolto su http://localhost:${port}`);
 });
-
