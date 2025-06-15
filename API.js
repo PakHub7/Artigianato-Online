@@ -186,9 +186,43 @@ app.get("/api/product/:id/image", async (req, res) => {
   }
 });
 
-app.get("/api/product/image/add");
+app.post("/api/product/:id/image/add"); // TODO: prendere più id per risparmiare nelle req API
+try {
+  const id = req.params.id;
+  const images = req.body.images;
+  if (!images || !Array.isArray(images) || images.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Lista di immagini non fornita o vuota nel corpo della richiesta.",
+    });
+  }
+  const result = await addProductImage(id, images);
+  if (result.success) {
+    return res.status(200).json({ success: true, data: result.images });
+  } else {
+    if (result.message === "no_images_provided") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Nessuna immagine valida fornita." });
+    } else if (result.message === "no_rows_inserted") {
+      return res.status(500).json({
+        success: false,
+        message: "Errore interno del server: nessuna riga inserita.",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ success: false, message: "Errore interno del server." });
+    }
+  }
+} catch (error) {
+  return res
+    .status(500)
+    .json({ success: false, message: "Errore interno del server" });
+}
 
-app.get("/api/product/image/:id/delete");
+app.delete("/api/product/image/:id/delete");
 
 // SEZIONE PRODOTTI
 app.get("/api/products", async (req, res) => {

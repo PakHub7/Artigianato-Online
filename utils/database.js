@@ -164,14 +164,31 @@ async function getProductImage(id, max = 0) {
   }
 }
 
-async function addProductImage(id, image) {
+async function addProductImage(id, images) {
+  // TODO: prendere più id per risparmiare nelle req API
   try {
-    const result = await pool.query(
-      "INSERT INTO immagini (idProd, img) VALUES ($1, $2) RETURNING *",
-      [id, image],
-    );
-    if (result.rows.rowCount) {
-      return { success: true, image: result.rows };
+    if (!Array.isArray(images) || images.length === 0) {
+      return { success: false, message: "no_images_provided" };
+    }
+
+    let values = [];
+    let params = [];
+    let i = 1;
+
+    images.forEach((image) => {
+      values.push(`($${i}, $${i + 1})`);
+      params.push(id, image);
+    });
+
+    const query =
+      "INSERT INTO immagini (idProd, img) VALUES " +
+      values.join(", ") +
+      " RETURNING *";
+    const result = await pool.query(query, params);
+    if (result.rowCount > 0) {
+      return { success: true, images: result.rows };
+    } else {
+      return { success: false, message: "no_rows_inserted" };
     }
   } catch (error) {
     return { success: false, message: "server_error" };
@@ -196,8 +213,8 @@ async function deleteProductImage(id) {
 async function getProducts(filters = {}) {
   // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri
   let query = "SELECT id, nome, prezzo FROM prodotti";
-  const valori = [];
-  const conditions = [];
+  let values = [];
+  let conditions = [];
   let i = 1;
 
   // Controlla se ci sono parametri in 'filters'
@@ -207,25 +224,25 @@ async function getProducts(filters = {}) {
         ? filters["categoria"]
         : [filters["categoria"]];
       conditions.push(`categoria = ANY($${i})`);
-      valori.push(categorie);
+      values.push(categorie);
       i++;
     }
 
     if ("prezzo_min" in filters) {
       conditions.push(`prezzo >= $${i}`);
-      valori.push(parseFloat(filters["prezzo_min"]));
+      values.push(parseFloat(filters["prezzo_min"]));
       i++;
     }
 
     if ("prezzo_max" in filters) {
       conditions.push(`prezzo <= $${i}`);
-      valori.push(parseFloat(filters["prezzo_max"]));
+      values.push(parseFloat(filters["prezzo_max"]));
       i++;
     }
 
     if ("disponibilita" in filters) {
       conditions.push(`disponibilita >= $${i}`); // Mostra solo prodotti con almeno X unità disponibili
-      valori.push(parseInt(filters["disponibilita"]));
+      values.push(parseInt(filters["disponibilita"]));
       i++;
     }
 
@@ -239,7 +256,7 @@ async function getProducts(filters = {}) {
       // Assicurarsi che sia un numero valido
       if (!isNaN(limite)) {
         query += ` LIMIT $${i}`;
-        valori.push(limite);
+        values.push(limite);
         i++;
       }
     }
@@ -248,7 +265,7 @@ async function getProducts(filters = {}) {
   try {
     const result = await pool.query(
       query,
-      valori.length > 0 ? valori : undefined,
+      values.length > 0 ? values : undefined,
     );
     return result.rows;
   } catch (error) {
@@ -323,26 +340,26 @@ async function deleteProduct(id) {
 
 async function updateProduct(id, params = {}) {
   let query = "UPDATE prodotti SET";
-  const valori = [];
-  const conditions = [];
+  let values = [];
+  let conditions = [];
   let i = 1;
 
   if (Object.keys(params).length > 0) {
     if ("descrizione" in params) {
       conditions.push(`descrizione= $${i}`);
-      valori.push(params["descrizione"]);
+      values.push(params["descrizione"]);
       i++;
     }
 
     if ("prezzo" in params) {
       conditions.push(`prezzo= $${i}`);
-      valori.push(parseFloat(params["prezzo"]));
+      values.push(parseFloat(params["prezzo"]));
       i++;
     }
 
     if ("disponibilita" in params) {
       conditions.push(`disponibilita= $${i}`);
-      valori.push(parseInt(params["disponibilita"]));
+      values.push(parseInt(params["disponibilita"]));
       i++;
     }
 
