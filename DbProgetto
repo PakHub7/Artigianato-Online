@@ -1,0 +1,586 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 15.12
+-- Dumped by pg_dump version 15.12
+
+-- Started on 2025-06-15 14:25:02
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 225 (class 1259 OID 16654)
+-- Name: immagini; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.immagini (
+    idimm integer NOT NULL,
+    idprod integer NOT NULL,
+    img character varying(2000)
+);
+
+
+ALTER TABLE public.immagini OWNER TO postgres;
+
+--
+-- TOC entry 224 (class 1259 OID 16653)
+-- Name: immagini_idimm_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.immagini_idimm_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.immagini_idimm_seq OWNER TO postgres;
+
+--
+-- TOC entry 3398 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: immagini_idimm_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.immagini_idimm_seq OWNED BY public.immagini.idimm;
+
+
+--
+-- TOC entry 219 (class 1259 OID 16455)
+-- Name: ordini; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ordini (
+    id integer NOT NULL,
+    cliente_id integer NOT NULL,
+    data_creazione timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    stato character varying(20) DEFAULT 'in lavorazione'::character varying,
+    idprodotto integer,
+    quantita integer DEFAULT 1 NOT NULL,
+    idpagamento integer,
+    venditore_id integer,
+    CONSTRAINT ordini_stato_check CHECK (((stato)::text = ANY ((ARRAY['in lavorazione'::character varying, 'spedito'::character varying, 'completato'::character varying, 'annullato'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.ordini OWNER TO postgres;
+
+--
+-- TOC entry 218 (class 1259 OID 16454)
+-- Name: ordini_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.ordini_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.ordini_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3399 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: ordini_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.ordini_id_seq OWNED BY public.ordini.id;
+
+
+--
+-- TOC entry 221 (class 1259 OID 16489)
+-- Name: pagamenti; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pagamenti (
+    id integer NOT NULL,
+    metodo character varying(50),
+    importo_tot numeric(10,2) NOT NULL,
+    stato character varying(20) DEFAULT 'in attesa'::character varying,
+    data timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pagamenti_stato_check CHECK (((stato)::text = ANY ((ARRAY['in attesa'::character varying, 'completato'::character varying, 'fallito'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.pagamenti OWNER TO postgres;
+
+--
+-- TOC entry 220 (class 1259 OID 16488)
+-- Name: pagamenti_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.pagamenti_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.pagamenti_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3400 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: pagamenti_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.pagamenti_id_seq OWNED BY public.pagamenti.id;
+
+
+--
+-- TOC entry 217 (class 1259 OID 16433)
+-- Name: prodotti; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.prodotti (
+    id integer NOT NULL,
+    nome character varying(255) NOT NULL,
+    descrizione text,
+    prezzo numeric(10,2) NOT NULL,
+    disponibilita integer NOT NULL,
+    artigiano_id integer NOT NULL,
+    data_pubblicazione timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    categoria character varying(20),
+    CONSTRAINT prodotti_disponibilita_check CHECK ((disponibilita >= 0)),
+    CONSTRAINT prodotti_prezzo_check CHECK ((prezzo >= (0)::numeric))
+);
+
+
+ALTER TABLE public.prodotti OWNER TO postgres;
+
+--
+-- TOC entry 216 (class 1259 OID 16432)
+-- Name: prodotti_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.prodotti_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.prodotti_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3401 (class 0 OID 0)
+-- Dependencies: 216
+-- Name: prodotti_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.prodotti_id_seq OWNED BY public.prodotti.id;
+
+
+--
+-- TOC entry 223 (class 1259 OID 16504)
+-- Name: recensioni; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.recensioni (
+    id integer NOT NULL,
+    prodotto_id integer NOT NULL,
+    utente_id integer NOT NULL,
+    voto integer NOT NULL,
+    commento text,
+    data timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT recensioni_voto_check CHECK (((voto >= 1) AND (voto <= 5)))
+);
+
+
+ALTER TABLE public.recensioni OWNER TO postgres;
+
+--
+-- TOC entry 222 (class 1259 OID 16503)
+-- Name: recensioni_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.recensioni_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.recensioni_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3402 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: recensioni_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.recensioni_id_seq OWNED BY public.recensioni.id;
+
+
+--
+-- TOC entry 215 (class 1259 OID 16411)
+-- Name: utenti; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.utenti (
+    id integer NOT NULL,
+    username character varying(100) NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash text NOT NULL,
+    ruolo character varying(20) NOT NULL,
+    indirizzo character varying(50),
+    CONSTRAINT utenti_ruolo_check CHECK (((ruolo)::text = ANY ((ARRAY['cliente'::character varying, 'artigiano'::character varying, 'admin'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.utenti OWNER TO postgres;
+
+--
+-- TOC entry 214 (class 1259 OID 16410)
+-- Name: utenti_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.utenti_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.utenti_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3403 (class 0 OID 0)
+-- Dependencies: 214
+-- Name: utenti_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.utenti_id_seq OWNED BY public.utenti.id;
+
+
+--
+-- TOC entry 3210 (class 2604 OID 16657)
+-- Name: immagini idimm; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.immagini ALTER COLUMN idimm SET DEFAULT nextval('public.immagini_idimm_seq'::regclass);
+
+
+--
+-- TOC entry 3201 (class 2604 OID 16458)
+-- Name: ordini id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ordini ALTER COLUMN id SET DEFAULT nextval('public.ordini_id_seq'::regclass);
+
+
+--
+-- TOC entry 3205 (class 2604 OID 16492)
+-- Name: pagamenti id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pagamenti ALTER COLUMN id SET DEFAULT nextval('public.pagamenti_id_seq'::regclass);
+
+
+--
+-- TOC entry 3199 (class 2604 OID 16436)
+-- Name: prodotti id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.prodotti ALTER COLUMN id SET DEFAULT nextval('public.prodotti_id_seq'::regclass);
+
+
+--
+-- TOC entry 3208 (class 2604 OID 16507)
+-- Name: recensioni id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recensioni ALTER COLUMN id SET DEFAULT nextval('public.recensioni_id_seq'::regclass);
+
+
+--
+-- TOC entry 3198 (class 2604 OID 16414)
+-- Name: utenti id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.utenti ALTER COLUMN id SET DEFAULT nextval('public.utenti_id_seq'::regclass);
+
+
+--
+-- TOC entry 3392 (class 0 OID 16654)
+-- Dependencies: 225
+-- Data for Name: immagini; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.immagini (idimm, idprod, img) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3386 (class 0 OID 16455)
+-- Dependencies: 219
+-- Data for Name: ordini; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.ordini (id, cliente_id, data_creazione, stato, idprodotto, quantita, idpagamento, venditore_id) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3388 (class 0 OID 16489)
+-- Dependencies: 221
+-- Data for Name: pagamenti; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pagamenti (id, metodo, importo_tot, stato, data) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3384 (class 0 OID 16433)
+-- Dependencies: 217
+-- Data for Name: prodotti; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.prodotti (id, nome, descrizione, prezzo, disponibilita, artigiano_id, data_pubblicazione, categoria) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3390 (class 0 OID 16504)
+-- Dependencies: 223
+-- Data for Name: recensioni; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.recensioni (id, prodotto_id, utente_id, voto, commento, data) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3382 (class 0 OID 16411)
+-- Dependencies: 215
+-- Data for Name: utenti; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.utenti (id, username, email, password_hash, ruolo, indirizzo) FROM stdin;
+1	pippo	pippo@gmail.com	pippo42	cliente	\N
+\.
+
+
+--
+-- TOC entry 3404 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: immagini_idimm_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.immagini_idimm_seq', 1, false);
+
+
+--
+-- TOC entry 3405 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: ordini_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.ordini_id_seq', 1, false);
+
+
+--
+-- TOC entry 3406 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: pagamenti_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.pagamenti_id_seq', 1, false);
+
+
+--
+-- TOC entry 3407 (class 0 OID 0)
+-- Dependencies: 216
+-- Name: prodotti_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.prodotti_id_seq', 1, false);
+
+
+--
+-- TOC entry 3408 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: recensioni_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.recensioni_id_seq', 1, false);
+
+
+--
+-- TOC entry 3409 (class 0 OID 0)
+-- Dependencies: 214
+-- Name: utenti_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.utenti_id_seq', 1, true);
+
+
+--
+-- TOC entry 3230 (class 2606 OID 16661)
+-- Name: immagini immagini_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.immagini
+    ADD CONSTRAINT immagini_pkey PRIMARY KEY (idimm, idprod);
+
+
+--
+-- TOC entry 3224 (class 2606 OID 16463)
+-- Name: ordini ordini_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ordini
+    ADD CONSTRAINT ordini_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3226 (class 2606 OID 16497)
+-- Name: pagamenti pagamenti_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pagamenti
+    ADD CONSTRAINT pagamenti_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3222 (class 2606 OID 16443)
+-- Name: prodotti prodotti_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.prodotti
+    ADD CONSTRAINT prodotti_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3228 (class 2606 OID 16513)
+-- Name: recensioni recensioni_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recensioni
+    ADD CONSTRAINT recensioni_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3218 (class 2606 OID 16422)
+-- Name: utenti utenti_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.utenti
+    ADD CONSTRAINT utenti_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 3220 (class 2606 OID 16420)
+-- Name: utenti utenti_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.utenti
+    ADD CONSTRAINT utenti_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3232 (class 2606 OID 24844)
+-- Name: ordini fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ordini
+    ADD CONSTRAINT fk FOREIGN KEY (venditore_id) REFERENCES public.utenti(id);
+
+
+--
+-- TOC entry 3238 (class 2606 OID 16662)
+-- Name: immagini immagini_idprod_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.immagini
+    ADD CONSTRAINT immagini_idprod_fkey FOREIGN KEY (idprod) REFERENCES public.prodotti(id);
+
+
+--
+-- TOC entry 3233 (class 2606 OID 16464)
+-- Name: ordini ordini_cliente_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ordini
+    ADD CONSTRAINT ordini_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES public.utenti(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3234 (class 2606 OID 16678)
+-- Name: ordini ordini_idpagamento_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ordini
+    ADD CONSTRAINT ordini_idpagamento_fkey FOREIGN KEY (idpagamento) REFERENCES public.pagamenti(id);
+
+
+--
+-- TOC entry 3235 (class 2606 OID 16672)
+-- Name: ordini ordini_idprodotto_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ordini
+    ADD CONSTRAINT ordini_idprodotto_fkey FOREIGN KEY (idprodotto) REFERENCES public.prodotti(id);
+
+
+--
+-- TOC entry 3231 (class 2606 OID 16444)
+-- Name: prodotti prodotti_artigiano_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.prodotti
+    ADD CONSTRAINT prodotti_artigiano_id_fkey FOREIGN KEY (artigiano_id) REFERENCES public.utenti(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3236 (class 2606 OID 16514)
+-- Name: recensioni recensioni_prodotto_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recensioni
+    ADD CONSTRAINT recensioni_prodotto_id_fkey FOREIGN KEY (prodotto_id) REFERENCES public.prodotti(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3237 (class 2606 OID 16519)
+-- Name: recensioni recensioni_utente_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recensioni
+    ADD CONSTRAINT recensioni_utente_id_fkey FOREIGN KEY (utente_id) REFERENCES public.utenti(id) ON DELETE CASCADE;
+
+
+-- Completed on 2025-06-15 14:25:02
+
+--
+-- PostgreSQL database dump complete
+--
+
