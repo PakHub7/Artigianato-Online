@@ -72,7 +72,7 @@ async function login(username, password) {
     if (user.success) {
       const match = await bcrypt.compare(password, user.password_hash);
 
-      if (match) {
+      if (!match) {
         return { success: false, message: "wrong_password" };
       }
 
