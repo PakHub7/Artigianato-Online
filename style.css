@@ -104,9 +104,9 @@ body.overlay-active .navbar {
 }
 
 /* === PRODUCT GRID === */
-.product-grid {
+.product-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr); /* 4 colonne fisse */
   gap: 1.5rem;
   padding: 2rem;
 }
@@ -114,11 +114,33 @@ body.overlay-active .navbar {
 .product-card {
   background: white;
   padding: 1rem;
+  padding-bottom: 0.4rem;
   border-radius: 1rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transition: transform 0.2s ease-in-out;
   cursor: pointer;
   text-align: center;
+}
+
+.product-card.new {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.product-card.new .plus-icon {
+  color: #555;
+  transition: color 0.3s ease;
+}
+
+.product-card.new:hover .plus-icon {
+  color: #007bff;
+}
+
+.product-card p {
+  margin-bottom: 0;
 }
 
 .product-card:hover {
@@ -127,9 +149,61 @@ body.overlay-active .navbar {
 
 .product-card img {
   width: 100%;
-  height: 180px;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 0.5rem;
+}
+
+@media (max-width: 992px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.product-card {
+  position: relative; /* Necessario per posizionare i bottoni */
+}
+
+/* Pulsanti rotondi */
+.card-btn {
+  position: absolute;
+  top: -9px;
+  width: 32px;
+  height: 32px;
+  background-color: #666666;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #ffffff;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+
+
+/* Posizioni */
+.card-btn.edit {
+  left: -9px;
+}
+
+.card-btn.edit:hover {
+  color: orange;
+}
+
+.card-btn.delete {
+  right: -9px;
+}
+
+.card-btn.delete:hover {
+  color: rgb(245, 0, 0);
 }
 
 /* === PRODUCT OVERLAY === */
@@ -372,7 +446,7 @@ body.overlay-active .navbar {
   padding-bottom: 0;
 }
 .error-msg {
-  color: red;
+  color: rgb(245, 0, 0);
   margin-top: 0.5rem;
   font-size: 0.9rem;
 }
@@ -737,4 +811,333 @@ form button:hover {
 
 .checkout-btn:hover {
   background-color: #0056b3;
+}
+
+/* === USER AREA === */
+/* Overlay area personale */
+.user-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.user-overlay.show {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.user-overlay-content {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 0; /* Niente padding */
+  width: 95vw;
+  max-width: 1100px;
+  height: 95vh;
+  max-height: 800px;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Sidebar attaccata ai bordi */
+.user-sidebar-icons {
+  width: 60px;
+  flex: 0 0 60px;
+  background-color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0 1rem 0;
+  border-top-left-radius: 1.5rem;
+  border-bottom-left-radius: 1.5rem;
+}
+
+.icon-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #333;
+  transition: color 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: #007bff;
+}
+
+.icon-btn.active {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.logout-icon {
+  margin-bottom: 1rem;
+}
+
+.logout-icon:hover {
+  color:rgb(245, 0, 0);
+}
+
+/* Area principale dell'overlay */
+.user-main {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.user-overlay-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.user-overlay-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+/* Grid dei prodotti del venditore */
+.seller-products-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.seller-product-card {
+  flex: 1 1 calc(33.33% - 1rem); /* max 3 per riga con gap */
+  background-color: #f8f9fa;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  padding-bottom: 0;
+  min-width: 200px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.seller-product-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;       
+  object-fit: cover;          
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: #e0e0e0; 
+}
+
+.seller-product-card h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.seller-product-card p {
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* Parte delle statistiche */
+.chart-type-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chart-type-buttons button {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.chart-type-buttons button:hover {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.chart-type-buttons button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Ordini */
+.orders-list {
+  margin-top: 2rem;
+  max-height: 300px;
+  overflow-y: auto;
+  border-top: 1px solid #ccc;
+  padding-top: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+  padding: 0.5rem 0;
+}
+
+.order-products {
+  flex: 1;
+}
+
+.order-product {
+  font-size: 0.9rem;
+}
+
+.order-state {
+  flex-basis: 150px;
+  text-align: center;
+  font-style: italic;
+  color: #555;
+}
+
+.order-profit {
+  flex-basis: 100px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #28a745;
+}
+
+/* Icona modifica campo */
+.edit-icon {
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.2rem;
+  color: #555;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.edit-icon.disabled {
+  opacity:0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Popup conferma modifiche */
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease;
+}
+
+.popup:not(.hidden) {
+  display: flex;
+  opacity: 1;
+}
+
+.popup-content {
+  background: rgba(255, 255, 255);
+  backdrop-filter: blur(10px);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+  text-align: center;
+  width: 90%;
+  max-width: 380px;
+  animation: popupFadeIn 0.3s ease;
+}
+
+.popup-content p {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+}
+
+
+.popup-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.popup-content .btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  text-align: center;
+}
+
+.popup-content .btn-success {
+  background-color: #28a745;
+  color: white;
+  border: none;
+}
+
+.popup-content .btn-success:hover {
+  background-color: #218838;
+}
+
+.popup-content .btn-secondary {
+  background-color: #dee2e6;
+  color: #333;
+  border: none;
+}
+
+.popup-content .btn-secondary:hover {
+  background-color: #c8ccd0;
+}
+
+@keyframes popupFadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Popup eliminazione prodotto */
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+.btn-danger:hover {
+  background-color: #c82333;
 }

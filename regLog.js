@@ -43,7 +43,7 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
       localStorage.setItem("loggedInUser", JSON.stringify(data.user)); // Salvataggio
       closeLoginOverlay();
       updateNavbarForLogin();
-      console.log("Login effettuato:", data.user);
+      if(typeof updateUserSidebar === "function") updateUserSidebar(); // Aggiorna la sidebar se la funzione esiste
     } else {
         errorDiv.textContent = data.message || "Credenziali non valide.";
       }
@@ -71,18 +71,26 @@ function showRoleSelection() {
 
 function closeRegisterOverlay() {
   registerOverlay.classList.add("hidden");
-  document.getElementById("clienteError").textContent = "";
-  document.getElementById("venditoreError").textContent = "";
-  document.getElementById("formCliente").reset();
-  document.getElementById("formVenditore").reset();
+
+  const clienteError = document.getElementById("clienteError");
+  if (clienteError) clienteError.textContent = "";
+
+  const venditoreError = document.getElementById("venditoreError");
+  if (venditoreError) venditoreError.textContent = "";
+
+  const formCliente = document.getElementById("formCliente");
+  if (formCliente) formCliente.reset();
+
+  const formVenditore = document.getElementById("formVenditore");
+  if (formVenditore) formVenditore.reset();
 }
+
+// Gestione click per chiudere l'overlay di registrazione
 registerOverlay.addEventListener("click", function (event) {
   if (!event.target.closest(".register-overlay-content")) {
     closeRegisterOverlay();
   }
 });
-
-
 
 // Gestione click sui pulsanti ruolo
 document.getElementById("clienteBtn").addEventListener("click", () => showDynamicForm("cliente"));
@@ -145,7 +153,7 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
       if (response.success) {
         closeRegisterOverlay();
         updateNavbarForLogin();
-        console.log(`${ruoloSelezionato} registrato con successo`);
+        if (typeof updateUserSidebar === "function") updateUserSidebar(); // Aggiorna la sidebar se la funzione esiste
       } else {
         errorDiv.textContent = response.message || "Registrazione fallita.";
       }
@@ -159,12 +167,6 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
 function checkStatus() {
   return localStorage.getItem("loggedInUser") !== null;
 }
-
-// --------- LOGOUT ---------
-function logoutUser() {
-  localStorage.removeItem("loggedInUser");
-  updateNavbarForLogin();;
-};
 
 // --------- NAVBAR UPDATE ---------
 function updateNavbarForLogin() {
@@ -181,3 +183,16 @@ function updateNavbarForLogin() {
     userIconContainer.style.display = "none"; // Nasconde subito
   }
 }
+
+// Inizializza la navbar al caricamento della pagina
+window.addEventListener("DOMContentLoaded", () => {
+  updateNavbarForLogin();
+  if(typeof updateUserSidebar === "function") updateUserSidebar(); // Aggiorna la sidebar se la funzione esiste
+});
+
+// --------- LOGOUT ---------
+function logoutUser() {
+  localStorage.removeItem("loggedInUser");
+  updateNavbarForLogin();
+  closeUserOverlay();
+};

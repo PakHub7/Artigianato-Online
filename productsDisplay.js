@@ -79,8 +79,7 @@ function openOverlay(index) {
   const cartItem = cart.find(item => item.id === product.id);
   const quantityInCart = cartItem ? cartItem.quantity : 0;
 
-  document.getElementById("productOverlayAvailability").textContent =
-    product.disponibilita > 0 ? `Disponibilità: ${product.disponibilita} pezzi` : 'Non disponibile';
+  document.getElementById("productOverlayAvailability").textContent = product.disponibilita > 0 ? `Disponibilità: ${product.disponibilita} pezzi` : 'Non disponibile';
 
   document.getElementById("quantitySelectionContainer").classList.toggle("hidden", product.disponibilita <= 0);
   document.getElementById("addToCartBtn").classList.toggle("hidden", product.disponibilita <= 0);

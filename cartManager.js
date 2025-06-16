@@ -52,6 +52,12 @@ function addToCart() {
     addToCartBtn.classList.add("hidden");
   }
 
+  // Resetta visivamente il campo input quantità e aggiorna il data-max
+  const inputQty = document.getElementById("quantityInput");
+  if (inputQty) {
+    inputQty.value = "1";
+    inputQty.setAttribute("data-max", product.disponibilita);
+  }
   // Mostra popup
   const popup = document.getElementById("cartPopup");
   popup.classList.add("show");
@@ -111,9 +117,26 @@ function openCart() {
   document.getElementById("cartContainer").classList.add("show");
 }
 
+// Chiude il carrello
 function closeCart() {
   document.getElementById("cartContainer").classList.remove("show");
 }
+
+// Chiude il carrello cliccando fuori 
+document.addEventListener("click", function (event) {
+  const cartContainer = document.getElementById("cartContainer");
+  const cartBtn = document.getElementById("cartBtn");
+
+  if (!cartContainer.classList.contains("show")) return;
+
+  const clickedInsideCart = cartContainer.contains(event.target);
+  const clickedOnCartBtn = cartBtn.contains(event.target);
+  const clickedRemoveBtn = event.target.closest(".remove-btn");
+
+  if (!clickedInsideCart && !clickedOnCartBtn && !clickedRemoveBtn) {
+    closeCart();
+  }
+});
 
 function renderCartItems() {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
