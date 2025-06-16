@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const bcrypt = require("bcrypt");
 
-const { getBalance } = require("./utils/payments");
+const { getOrderStatus } = require("./utils/payments");
 const {
   login,
   register,
@@ -203,12 +203,10 @@ app.post("/api/product/:id/image/add", async (req, res) => {
       return res.status(200).json({ success: true, data: result.images });
     } else {
       if (result.message === "no_images_provided") {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Nessuna immagine valida fornita.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Nessuna immagine valida fornita.",
+        });
       } else if (result.message === "no_rows_inserted") {
         return res.status(500).json({
           success: false,
@@ -407,29 +405,195 @@ app.get("api/orders", async (req, res) => {
   }
 });
 
-/*-----------------------------------------------------------------------------------------------------------------*/
-// SEZIONE DI TEST (DA RIMUOVERE IN SEGUITO)
-app.get("/api/test/stripe/balance", async (req, res) => {
-  getBalance()
-    .then((balance) => {
-      // console.log("Saldo: ", balance);
-      const available = balance.available.find((b) => b.currency === "eur");
-      console.log("Available: €", (available.amount / 100).toFixed(2));
-    })
-    .catch((err) => {
-      console.log("Errore nel recupero del saldo: ", err);
+// SEZIONE PAGAMENTI
+// Endpoint per creare una sessione di checkout
+// vero
+app.post("/api/checkout", async (req, res) => {
+  const { carrello, cliente_id } = req.body;
+
+  try {
+    const line_items = [];
+
+    // Qui devi implementare getProduct da DB, per esempio:
+    async function getProduct(prodotto_id) {
+      const result = await pool.query(
+        "SELECT nome, descrizione, prezzo FROM prodotti WHERE id = $1",
+        [prodotto_id],
+      );
+      if (result.rowCount === 0) return { success: false };
+      return { success: true, product: result.rows[0] };
+    }
+
+    for (const item of carrello) {
+      const prodotto = await getProduct(item.prodotto_id);
+      if (!prodotto.success) continue;
+
+      line_items.push({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: prodotto.product.nome,
+            description: prodotto.product.descrizione,
+          },
+          unit_amount: Math.round(prodotto.product.prezzo * 100),
+        },
+        quantity: item.quantita,
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items,
+      success_url: "http://localhost:3000/success.html",
+      cancel_url: "http://localhost:3000/cancel.html",
+      metadata: {
+        cliente_id: cliente_id.toString(),
+        carrello: JSON.stringify(carrello),
+      },
     });
 
-  /*
-  Saldo:  {
-    object: 'balance',
-    available: [ { amount: 0, currency: 'eur', source_types: [Object] } ],
-    connect_reserved: [ { amount: 0, currency: 'eur' } ],
-    livemode: false,
-    pending: [ { amount: 0, currency: 'eur', source_types: [Object] } ],
-    refund_and_dispute_prefunding: { available: [ [Object] ], pending: [ [Object] ] }
+    res.json({ url: session.url }); // redirect utente (frontend)
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Errore nel checkout" });
   }
-  */
+});
+
+// esempio
+app.post("/api/checkout", async (req, res) => {
+  try {
+    const {
+      amount = 2000, // Importo in centesimi (default: 20.00 EUR)
+      currency = "eur",
+      productName = "Prodotto di Test",
+      quantity = 1,
+    } = req.body;
+
+    // Crea la sessione di checkout
+    const session = await stripeClient.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: currency,
+            product_data: {
+              name: productName,
+            },
+            unit_amount: amount,
+          },
+          quantity: quantity,
+        },
+      ],
+      mode: "payment",
+      success_url: `${process.env.SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: process.env.CANCEL_URL,
+      metadata: {
+        order_id: `order_${Date.now()}`,
+        test_mode: "true",
+      },
+    });
+
+    res.json({
+      success: true,
+      sessionId: session.id,
+      url: session.url,
+      message: "Sessione di checkout creata con successo",
+    });
+  } catch (error) {
+    console.error("Errore nella creazione della sessione:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Errore nella creazione della sessione di checkout",
+    });
+  }
+});
+
+// Endpoint per verificare lo stato di una sessione (feedback senza webhook)
+app.get("/api/checkout/status/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const result = await getOrderStatus(sessionId);
+    if (result.success) {
+      return res.status(200).json(result);
+    } else {
+      return res.code(404).json({
+        success: false,
+        message: "La sessione di checkount non è stata trovata",
+      });
+    }
+  } catch (error) {
+    console.error("Errore nel recupero dello stato:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Errore nel recupero dello stato della sessione",
+    });
+  }
+});
+
+// Pagina di successo
+app.get("/success", (req, res) => {
+  const sessionId = req.query.session_id;
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Pagamento Completato</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+            .success { color: #28a745; }
+            .info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <h1 class="success">✅ Pagamento Completato con Successo!</h1>
+        <div class="info">
+            <p><strong>Session ID:</strong> ${sessionId}</p>
+            <p>Il tuo pagamento è stato elaborato correttamente.</p>
+        </div>
+        <button onclick="checkStatus()">Verifica Stato Pagamento</button>
+        <div id="status-result"></div>
+
+        <script>
+            async function checkStatus() {
+                try {
+                    const response = await fetch('/api/checkout/status/${sessionId}');
+                    const data = await response.json();
+                    document.getElementById('status-result').innerHTML =
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } catch (error) {
+                    document.getElementById('status-result').innerHTML =
+                        '<p style="color: red;">Errore: ' + error.message + '</p>';
+                }
+            }
+        </script>
+    </body>
+    </html>
+  `);
+});
+
+// Pagina di cancellazione
+app.get("/cancel", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Pagamento Annullato</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+            .cancel { color: #dc3545; }
+        </style>
+    </head>
+    <body>
+        <h1 class="cancel">❌ Pagamento Annullato</h1>
+        <p>Il pagamento è stato annullato. Puoi riprovare quando vuoi.</p>
+        <a href="/">← Torna alla home</a>
+    </body>
+    </html>
+  `);
 });
 
 app.listen(port, () => {

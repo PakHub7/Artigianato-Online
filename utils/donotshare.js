@@ -16,4 +16,4 @@ function getStripeSecretKey() {
 module.exports = {
   getStripePublicKey,
   getStripeSecretKey,
-}; // module.exports = {nomeFun1, nomeFun2}
+};
