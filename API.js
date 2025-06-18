@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const bcrypt = require("bcrypt");
 
-const { getOrderStatus } = require("./utils/payments");
+const { getOrderStatus,createCheckount } = require("./utils/payments");
 const {
   login,
   register,
@@ -410,105 +410,14 @@ app.get("api/orders", async (req, res) => {
 // vero
 app.post("/api/checkout", async (req, res) => {
   const { carrello, cliente_id } = req.body;
-
   try {
-    const line_items = [];
-
-    // Qui devi implementare getProduct da DB, per esempio:
-    async function getProduct(prodotto_id) {
-      const result = await pool.query(
-        "SELECT nome, descrizione, prezzo FROM prodotti WHERE id = $1",
-        [prodotto_id],
-      );
-      if (result.rowCount === 0) return { success: false };
-      return { success: true, product: result.rows[0] };
-    }
-
-    for (const item of carrello) {
-      const prodotto = await getProduct(item.prodotto_id);
-      if (!prodotto.success) continue;
-
-      line_items.push({
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: prodotto.product.nome,
-            description: prodotto.product.descrizione,
-          },
-          unit_amount: Math.round(prodotto.product.prezzo * 100),
-        },
-        quantity: item.quantita,
-      });
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items,
-      success_url: "http://localhost:3000/success.html",
-      cancel_url: "http://localhost:3000/cancel.html",
-      metadata: {
-        cliente_id: cliente_id.toString(),
-        carrello: JSON.stringify(carrello),
-      },
-    });
-
-    res.json({ url: session.url }); // redirect utente (frontend)
+    const result = await createCheckount(carrello,cliente_id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Errore nel checkout" });
   }
 });
 
-// esempio
-app.post("/api/checkout", async (req, res) => {
-  try {
-    const {
-      amount = 2000, // Importo in centesimi (default: 20.00 EUR)
-      currency = "eur",
-      productName = "Prodotto di Test",
-      quantity = 1,
-    } = req.body;
-
-    // Crea la sessione di checkout
-    const session = await stripeClient.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: currency,
-            product_data: {
-              name: productName,
-            },
-            unit_amount: amount,
-          },
-          quantity: quantity,
-        },
-      ],
-      mode: "payment",
-      success_url: `${process.env.SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: process.env.CANCEL_URL,
-      metadata: {
-        order_id: `order_${Date.now()}`,
-        test_mode: "true",
-      },
-    });
-
-    res.json({
-      success: true,
-      sessionId: session.id,
-      url: session.url,
-      message: "Sessione di checkout creata con successo",
-    });
-  } catch (error) {
-    console.error("Errore nella creazione della sessione:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      message: "Errore nella creazione della sessione di checkout",
-    });
-  }
-});
 
 // Endpoint per verificare lo stato di una sessione (feedback senza webhook)
 app.get("/api/checkout/status/:sessionId", async (req, res) => {
