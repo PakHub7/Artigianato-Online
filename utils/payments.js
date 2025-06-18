@@ -93,4 +93,5 @@ async function getOrderStatus(sessionId) {
   }
 }
 
-module.exports = { getOrderStatus };
+module.exports = { getOrderStatus,createCheckount };
+
