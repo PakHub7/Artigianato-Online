@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const bcrypt = require("bcrypt");
 
-const { getOrderStatus,createCheckount } = require("./utils/payments");
+const { getOrderStatus, createCheckount } = require("./utils/payments");
 const {
   login,
   register,
@@ -411,13 +411,12 @@ app.get("api/orders", async (req, res) => {
 app.post("/api/checkout", async (req, res) => {
   const { carrello, cliente_id } = req.body;
   try {
-    const result = await createCheckount(carrello,cliente_id);
+    const result = await createCheckount(carrello, cliente_id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Errore nel checkout" });
   }
 });
-
 
 // Endpoint per verificare lo stato di una sessione (feedback senza webhook)
 app.get("/api/checkout/status/:sessionId", async (req, res) => {

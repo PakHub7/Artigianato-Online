@@ -7,6 +7,7 @@ const stripe = require("stripe")(getStripeSecretKey());
 //console.log("Chiave Segreta: ", getStripeSecretKey());
 
 async function createCheckount(carrello, cliente_id) {
+  // fare get prodotto/i + update per diminuire la quantità + begin transaction
   try {
     const line_items = [];
 
@@ -93,5 +94,4 @@ async function getOrderStatus(sessionId) {
   }
 }
 
-module.exports = { getOrderStatus,createCheckount };
-
+module.exports = { getOrderStatus, createCheckount };

@@ -420,6 +420,19 @@ async function showOrder(id, ruolo) {
 2. se disponibili, eliminazione dal database della quantità richiesta dei prodotti e aggiunta in tabella ordini degli ordini effettuati
 3. se non disponibili si notifica l'utente mostrando i prodotti che non sono più disponibili
 */
+async function addOrder() {
+  // durante il pagamento - stato in lavorazione
+  try {
+    const result = await pool.query(
+      "INSERT FROM ordini (cliente_id, venditore_id, id_prodotto, quantita, id_pagamento",
+    );
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function updateOrder() {}
+
 async function notifyUser() {
   // se alcuni prodotti nel carrello non sono più disponibili
 }
