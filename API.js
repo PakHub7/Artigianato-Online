@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 // const { Pool } = require("pg");
 const path = require("path");
 const bcrypt = require("bcrypt");
@@ -14,7 +15,6 @@ const {
   getProductImage,
   addProductImage,
   deleteProductImage,
-  updateUser,
 } = require("./utils/database");
 
 const app = express();
@@ -29,6 +29,7 @@ app.use(express.json());
 
 // Servi la pagina HTML
 app.use(express.static(path.join(__dirname)));
+app.use(cors({origin:'*'}));
 
 // SEZIONE UTENTI
 app.post("/api/login", async (req, res) => {
