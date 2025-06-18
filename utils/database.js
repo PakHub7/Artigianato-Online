@@ -438,16 +438,24 @@ async function notifyUser() {
 }
 
 async function checkAvailablity(ids) {
-  const result = await pool.query(
-    "SELECT disponibilita FROM prodotti WHERE id = ANY($1)",
-    [ids],
-  );
-  return result.rows;
+  try {
+    const result = await pool.query(
+      "SELECT disponibilita FROM prodotti WHERE id = ANY($1)",
+      [ids],
+    );
+    return { success: true, data: result.rows };
+  } catch (error) {
+    return {success: false, message: "server_error"}
+  }
 }
 
-async function lockProducts() {}
-
-// SEZIONE PAGAMENTI
+async function lockProducts() {
+  try {
+    const
+  } catch (error) {
+    return {success: false, }
+  }
+}
 
 module.exports = {
   login,
@@ -459,4 +467,5 @@ module.exports = {
   deleteProductImage,
   getProduct,
   getProducts,
+  updateProduct
 };

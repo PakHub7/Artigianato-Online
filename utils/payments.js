@@ -1,5 +1,5 @@
 const { getStripePublicKey, getStripeSecretKey } = require("./donotshare");
-const { getProduct } = require("./database.js");
+const { getProduct, updateProduct } = require("./database.js");
 
 const stripe = require("stripe")(getStripeSecretKey());
 
@@ -36,6 +36,12 @@ async function createCheckount(carrello, cliente_id) {
         },
         quantity: item.quantita,
       });
+
+      const result = await updateProduct(
+        (id = item.prodotto_id),
+        (params = { disponibilita: prodotto.disponibilita - item.quantita }),
+      );
+      if (!result.success) continue;
     }
 
     const session = await stripe.checkout.sessions.create({

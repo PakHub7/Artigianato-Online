@@ -30,17 +30,6 @@ app.use(express.json());
 // Servi la pagina HTML
 app.use(express.static(path.join(__dirname)));
 
-// Endpoint per ottenere i dati
-app.get("/api/dati", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM utenti" + "");
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Errore nella query", err);
-    res.status(500).json({ errore: "Errore durante la query" });
-  }
-});
-
 // SEZIONE UTENTI
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
@@ -55,7 +44,7 @@ app.post("/api/login", async (req, res) => {
     const result = await login(username, password);
 
     if (result.success) {
-      return res.status(200).json({ success: true, user: result.user });
+      return res.status(200).json({ success: true, data: result.user });
     }
 
     switch (result.message) {
@@ -92,7 +81,7 @@ app.post("/api/register", async (req, res) => {
     const result = await register(username, password, email);
 
     if (result.success) {
-      return res.status(201).json({ success: true, user: result.user });
+      return res.status(201).json({ success: true, data: result.user });
     } else if (result.message === "user_already_exists") {
       return res.status(409).json({
         success: false,
@@ -124,7 +113,7 @@ app.get("/api/user/:username", async (req, res) => {
     result = await getUser(username);
 
     if (result.success) {
-      return res.status(200).json({ success: true, user: result.user });
+      return res.status(200).json({ success: true, data: result.user });
     } else if (result.message === "not_found") {
       return res
         .status(401)
@@ -153,7 +142,7 @@ app.post("/api/user/update", async (req, res) => {
     );
 
     if (result.success) {
-      return res.status(200).json({ success: true, user: result.user });
+      return res.status(200).json({ success: true, data: result.user });
     } else {
       return res
         .status(404)
@@ -174,7 +163,7 @@ app.get("/api/product/:id/image", async (req, res) => {
     const max = parseInt(req.query.max) || 0;
     const result = await getProductImage(id, max);
     if (result.success) {
-      return res.status(200).json({ success: 200, images: result.images });
+      return res.status(200).json({ success: 200, data: result.images });
     }
     return res
       .status(404)
@@ -274,7 +263,7 @@ app.get("/api/products", async (req, res) => {
     const filters = req.query;
     const products = await getProducts(filters);
     if (products.success) {
-      return res.status(200).json({ success: true, products: products }); // products contiene l'array dei prodotti
+      return res.status(200).json({ success: true, data: products }); // products contiene l'array dei prodotti
     } else {
       return res
         .status(404)
@@ -303,7 +292,7 @@ app.get("/api/products/:id", async (req, res) => {
     const result = await getProduct(id);
 
     if (result.success) {
-      return res.status(200).json({ success: true, product: result.product });
+      return res.status(200).json({ success: true, data: result.product });
     } else {
       return res
         .status(404)
@@ -368,7 +357,7 @@ app.post("/api/product/update", async (req, res) => {
     const result = await updateProduct(id, params);
 
     if (result.success) {
-      return res.status(200).json({ success: true, product: result.product });
+      return res.status(200).json({ success: true, data: result.product });
     } else {
       return res
         .status(404)
@@ -391,7 +380,7 @@ app.get("api/orders", async (req, res) => {
     const result = await showOrder(id, ruolo);
 
     if (result.success) {
-      return res.status(200).json({ success: true, product: result.product });
+      return res.status(200).json({ success: true, data: result.product });
     } else {
       return res
         .status(404)
@@ -412,6 +401,7 @@ app.post("/api/checkout", async (req, res) => {
   const { carrello, cliente_id } = req.body;
   try {
     const result = await createCheckount(carrello, cliente_id);
+    return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Errore nel checkout" });
@@ -424,7 +414,7 @@ app.get("/api/checkout/status/:sessionId", async (req, res) => {
     const { sessionId } = req.params;
     const result = await getOrderStatus(sessionId);
     if (result.success) {
-      return res.status(200).json(result);
+      return res.status(200).json({ success: true, data: result });
     } else {
       return res.code(404).json({
         success: false,
