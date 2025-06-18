@@ -33,24 +33,60 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
   }
 
   fetch("/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  body: JSON.stringify({
+    username: username.trim(),
+    password: password
   })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-      localStorage.setItem("loggedInUser", JSON.stringify(data.user)); // Salvataggio
-      closeLoginOverlay();
-      updateNavbarForLogin();
-      if(typeof updateUserSidebar === "function") updateUserSidebar(); // Aggiorna la sidebar se la funzione esiste
-    } else {
-        errorDiv.textContent = data.message || "Credenziali non valide.";
-      }
+})
+.then(async (response) => {
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Errore durante il login");
+  }
+  return data;
+})
+.then(data => {
+  if (data.success) {
+    localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+    closeLoginOverlay();
+    updateNavbarForLogin();
+    if (typeof updateUserSidebar === "function") updateUserSidebar();
+  }
+})
+.catch(error => {
+  console.error("Errore login:", error);
+  errorDiv.textContent = error.message;
+  errorDiv.style.display = "block";
+});
+
+    /*fetch('/api/login', {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        email: "tua@email.com",
+        password: "tua_password"
+      })
     })
-    .catch(() => {
-      errorDiv.textContent = "Errore di connessione al server.";
-    });
+    .then(response => {
+      if (!response.ok) throw new Error("Errore login");
+      return response.json();
+    })
+    .then(data => {
+      console.log("Login success:", data);
+      // Gestisci il login riuscito
+    })
+    .catch(error => {
+      console.error("Errore login:", error);
+      // Mostra errore all'utente
+    });*/
 });
 
 // --------- REGISTRAZIONE ---------
@@ -196,3 +232,89 @@ function logoutUser() {
   updateNavbarForLogin();
   closeUserOverlay();
 };
+
+// Gestione logout automatico
+/*function setupAutoLogout() {
+  // Flag per distinguere tra refresh e chiusura
+  let isReloading = false;
+
+  // Rileva se è un refresh
+  window.addEventListener('beforeunload', (e) => {
+    const performance = window.performance;
+    if (performance && performance.navigation.type === 1) {
+      isReloading = true;
+    }
+  });
+
+  // Logout solo alla chiusura effettiva
+  window.addEventListener('unload', () => {
+    if (!isReloading && checkStatus()) {
+      localStorage.setItem('pendingLogout', 'true');
+    }
+  });
+
+  // Gestione all'apertura
+  window.addEventListener('load', () => {
+    if (localStorage.getItem('pendingLogout')) {
+      logoutUser();
+      localStorage.removeItem('pendingLogout');
+    }
+  });
+}*/
+
+// --------- LOGOUT AUTOMATICO ---------
+function setupAutoLogout() {
+  let isReloading = false;
+
+  // Rileva i tasti di refresh (F5/Ctrl+R/Cmd+R)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.metaKey && e.key === 'r')) {
+      isReloading = true;
+    }
+  });
+
+  // Rileva click sul pulsante refresh del browser
+  window.addEventListener('mouseup', (e) => {
+    if (e.button === 1) { // Tasto centrale del mouse (click su refresh)
+      isReloading = true;
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (!isReloading && checkStatus()) {
+      localStorage.setItem('pendingLogout', 'true');
+    }
+  });
+
+  window.addEventListener('load', () => {
+    if (localStorage.getItem('pendingLogout')) {
+      logoutUser();
+      localStorage.removeItem('pendingLogout');
+    }
+    isReloading = false; // Reset per la prossima volta
+  });
+    
+  if ('connection' in navigator) {
+    navigator.connection.addEventListener('change', () => {
+      isReloading = true; // Considera i cambi di connessione come refresh
+    });
+  }
+}
+
+// Inizializzazione
+window.addEventListener('DOMContentLoaded', () => {
+  setupAutoLogout();
+  updateNavbarForLogin();
+  if(typeof updateUserSidebar === 'function') updateUserSidebar();
+});
+
+// Verifica se l'utente è loggato
+function isUserLoggedIn() {
+  return localStorage.getItem('loggedInUser') !== null;
+}
+
+// Inizializza al caricamento della pagina
+window.addEventListener('DOMContentLoaded', () => {
+  setupAutoLogout();
+  updateNavbarForLogin();
+});
