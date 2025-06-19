@@ -7,14 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
   const applyFilters = document.getElementById("applyFilters");
   const resetFilters = document.getElementById("resetFilters");
 
-  // Debug iniziale
-  console.log("Elementi trovati:", {
-    toggle: filterToggle,
-    sidebar: filterSidebar,
-    overlay: sidebarOverlay,
-    closeBtn: closeFilters
-  });
-
   // Gestione apertura/chiusura sidebar
   filterToggle.addEventListener("click", toggleSidebar);
   sidebarOverlay.addEventListener("click", closeSidebar);
@@ -75,25 +67,22 @@ document.addEventListener("DOMContentLoaded", function() {
   }*/
 
     function getSelectedFilters() {
-      // Recupera i valori dall'UI
-      const categoryCheckboxes = document.querySelectorAll('.filter-group input[type="checkbox"][id^="cat-"]:checked');
-      const categories = Array.from(categoryCheckboxes).map(cb => cb.value.toLowerCase());
-      
-      const minPrice = parsePriceInput(document.getElementById("minPrice").value);
-      const maxPrice = parsePriceInput(document.getElementById("maxPrice").value);
-      const disponibilita = document.getElementById("availableOnly").checked ? 1 : null; // 1 = Solo disponibili
+  const categoryCheckboxes = document.querySelectorAll('.filter-group input[type="checkbox"][id^="cat-"]:checked');
+  const categories = Array.from(categoryCheckboxes).map(cb => cb.value.toLowerCase());
+  
+  const priceOrder = document.querySelector(".price-order .active")?.id || null;
+  const availableOnly = document.getElementById("availableOnly").checked;
 
-      // Formatta i dati per il backend
-      return {
-        categoria: categories.length > 0 ? categories : null, // Array o null
-        prezzo_min: parsePriceInput(document.getElementById("minPrice").value) || null, // Number o null
-        prezzo_max: parsePriceInput(document.getElementById("maxPrice").value) || null,
-        disponibilita: document.getElementById("availableOnly").checked ? 1 : null, // Integer o null
-        limit: 20 // Valore fisso o da UI (es. dropdown)
-      };
-    }
+  return {
+    categories: categories.length > 0 ? categories : null,
+    minPrice: parsePriceInput(document.getElementById("minPrice").value),
+    maxPrice: parsePriceInput(document.getElementById("maxPrice").value),
+    availableOnly: availableOnly,
+    priceOrder: priceOrder
+  };
+}
 
-  async function applyFiltersHandler() {
+  /*async function applyFiltersHandler() {
   const filters = getSelectedFilters();
   console.log("Filtri applicati:", filters);
 
@@ -121,6 +110,32 @@ document.addEventListener("DOMContentLoaded", function() {
       window.applyProductFilters(filters, sourceProducts);
     }
   }
+  closeSidebar();
+}*/
+
+async function applyFiltersHandler() {
+  const filters = getSelectedFilters();
+  console.log("Filtri prima della validazione:", filters);
+
+  const validation = validatePriceInputs(filters.minPrice, filters.maxPrice);
+  if (!validation.valid) {
+    alert(validation.error);
+    return;
+  }
+
+  console.log("Filtri dopo validazione:", filters); // Debug
+  
+  // Verifica se applyProductFilters esiste
+  if (typeof window.applyProductFilters !== 'function') {
+    console.error("applyProductFilters non è una funzione!");
+    return;
+  }
+
+  // Verifica i prodotti disponibili
+  console.log("All products:", window.allProducts);
+  console.log("Displayed products:", window.displayedProducts);
+
+  window.applyProductFilters(filters);
   closeSidebar();
 }
 
@@ -262,7 +277,7 @@ function clearInputError(inputElement) {
     document.getElementById("priceAsc")?.classList.remove("active");
   });
 
-  async function applyServerSideFilters(filters) {
+  /*async function applyServerSideFilters(filters) {
     try {
       const payload = {
         ...filters,
@@ -358,7 +373,7 @@ function clearInputError(inputElement) {
       // Riordina nel DOM
       visibleProducts.forEach(product => productGrid.appendChild(product));
     }
-  }
+  }*/
 
  function initCategories() {
     console.log("Inizializzazione categorie...");

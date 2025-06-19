@@ -1,35 +1,15 @@
-import { executeSearch, resetSearch } from './search.js';
-
+window.addToCart = addToCart;
 let searchResults = [];
 let allProducts = [];
 let filteredProducts = [];
-let displayedProducts = [];
-let currentProductIndex = 0;
+window.displayedProducts = [];
+window.currentProductIndex = 0;
 const initialProductsCount = 12;
 const productsPerLoad = 12;
 
 // Funzione principale per caricare i prodotti
-export async function loadProducts() {
-  /*try {
-    const response = await fetch('http://localhost:3000/api/products');
-    
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-    allProducts = await response.json();
-    displayedProducts = [...allProducts];
-    
-    if (!Array.isArray(allProducts)) throw new Error("La risposta non è un array valido");
-
-    if (allProducts.length === 0) {
-      showMessage('Nessun prodotto disponibile al momento.');
-    } else {
-      renderInitialProducts();
-    }
-  } catch (error) {
-    console.error('Errore nel caricamento prodotti:', error);
-    showError('Impossibile caricare i prodotti. Riprova più tardi.');
-  }*/
-
+async function loadProducts() {
+    isLoading = true;
     try {
     const response = await fetch('/api/products');
     
@@ -38,13 +18,14 @@ export async function loadProducts() {
     }
     
     const products = await response.json();
-    allProducts = products;
-    displayedProducts = [...allProducts];
-    
-    if (!Array.isArray(allProducts)) {
-      throw new Error("La risposta non è un array valido");
-    }
+    // Assicurati che products sia un array
+    allProducts = Array.isArray(products) ? products : [];
+    window.displayedProducts = [...allProducts];
 
+    //console.log("Stato isLoading:", isLoading);
+    //console.log("displayedProducts:", displayedProducts);
+    //console.log("Grid element:", document.getElementById("productGrid"));
+    
     if (allProducts.length === 0) {
       showMessage('Nessun prodotto disponibile al momento.');
     } else {
@@ -52,117 +33,81 @@ export async function loadProducts() {
     }
   } catch (error) {
     console.error('Errore nel caricamento prodotti:', error);
+    //displayedProducts = [];
     showError('Impossibile caricare i prodotti. Riprova più tardi.');
+  } finally {
+    isLoading = false;
+    renderInitialProducts();
   }
 }
 
 let lastFilters = {};
 
-// Funzione per applicare i filtri (esportata per essere usata da filters.js)
-// Sostituisci la funzione applyProductFilters con questa:
-/*export function applyProductFilters(filters, sourceProducts = null) {
-  const productsToFilter = sourceProducts || allProducts;
+
+function applyProductFilters(filters, sourceProducts = null) {
+  console.log("Filtri ricevuti:", filters); // Debug
   
-  filteredProducts = [...productsToFilter];
-  lastFilters = filters;
-
-  // Filtro per categoria
-  if (filters.categories?.length > 0) {
-    filteredProducts = filteredProducts.filter(product => {
-      const catId = product.categoria_id?.toString();
-      const catName = product.categoria?.toString();
-      return filters.categories.some(cat => 
-        cat === catId || cat === catName
-      );
-    });
-  }
-
-  // Filtro per prezzo
-  if (filters.minPrice !== null && filters.minPrice !== undefined) {
-    filteredProducts = filteredProducts.filter(product => 
-      parseFloat(product.prezzo) >= parseFloat(filters.minPrice)
-    );
-  }
-  if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
-    filteredProducts = filteredProducts.filter(product => 
-      parseFloat(product.prezzo) <= parseFloat(filters.maxPrice)
-    );
-  }
-
-  // Filtro disponibilità
-  if (filters.availableOnly) {
-    filteredProducts = filteredProducts.filter(product => 
-      parseInt(product.disponibilita) > 0
-    );
-  }
-
-  // Ordinamento
-  if (filters.priceOrder) {
-    filteredProducts.sort((a, b) => {
-      const priceA = parseFloat(a.prezzo) || 0;
-      const priceB = parseFloat(b.prezzo) || 0;
-      return filters.priceOrder === "priceAsc" ? priceA - priceB : priceB - priceA;
-    });
-  }
-
-  displayedProducts = [...filteredProducts];
-  renderInitialProducts();
-}*/
-
-async function applyProductFilters(selectedCategories, minPrice, maxPrice) {
   try {
+    window.lastFilters = filters;
+    const productsToFilter = sourceProducts || allProducts;
+    let filteredProducts = [...productsToFilter];
 
-    const filters = {
-      categoria: Array.isArray(selectedCategories) ? selectedCategories : [selectedCategories],
-      prezzo_min: minPrice,
-      prezzo_max: maxPrice
-    };
+    // Filtro per categoria
+    if (filters.categories && filters.categories.length > 0) {
+      filteredProducts = filteredProducts.filter(product => {
+        const productCategory = product.categoria?.toLowerCase() || 
+                              product.categoria_id?.toString().toLowerCase();
+        return filters.categories.some(cat => 
+          cat.toLowerCase() === productCategory
+        );
+      });
+    }
 
-    console.log('Sending filters:', filters);
-
-    const response = await fetch('/api/products/filter', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(filters)
-    });
-
-    /*const response = await fetch('/api/products/filter', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        categoria: Array.isArray(selectedCategories) ? selectedCategories : [selectedCategories],
-        prezzo_min: minPrice,
-        prezzo_max: maxPrice
-      })
-    });
-    
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    const filteredProducts = await response.json();
-    displayProducts(filteredProducts.products);
-  } catch (error) {
-    console.error('Errore nell\'applicazione dei filtri:', error);
-  }*/
-  if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    // Filtro per prezzo
+    if (filters.minPrice !== null && filters.minPrice !== undefined) {
+      filteredProducts = filteredProducts.filter(product => {
+        const price = parseFloat(product.prezzo);
+        return !isNaN(price) && price >= filters.minPrice;
+      });
     }
     
-    const result = await response.json();
-    displayedProducts = result.products || result;
+    if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+      filteredProducts = filteredProducts.filter(product => {
+        const price = parseFloat(product.prezzo);
+        return !isNaN(price) && price <= filters.maxPrice;
+      });
+    }
+
+    // Filtro disponibilità
+    if (filters.availableOnly) {
+      filteredProducts = filteredProducts.filter(product => {
+        const disponibilita = parseInt(product.disponibilita);
+        return !isNaN(disponibilita) && disponibilita > 0;
+      });
+    }
+
+    // Ordinamento
+    if (filters.priceOrder) {
+      filteredProducts.sort((a, b) => {
+        const priceA = parseFloat(a.prezzo) || 0;
+        const priceB = parseFloat(b.prezzo) || 0;
+        return filters.priceOrder === "priceAsc" ? priceA - priceB : priceB - priceA;
+      });
+    }
+
+    console.log("Prodotti filtrati:", filteredProducts); // Debug
+    displayedProducts = filteredProducts;
     renderInitialProducts();
+
   } catch (error) {
-    console.error('Filter error:', error);
-    showError('Failed to apply filters: ' + error.message);
+    console.error('Errore nel filtraggio:', error);
+    showError('Errore nell\'applicazione dei filtri. Riprova.');
   }
 }
 
+
 //Barra di ricerca
-export function updateProductGridWithSearchResults(products) {
+function updateProductGridWithSearchResults(products) {
   searchResults = products;
   applyCurrentFilters();
 }
@@ -194,8 +139,24 @@ function applyLastFilters() {
 // Render iniziale
 function renderInitialProducts() {
   const grid = document.getElementById("productGrid");
-  grid.innerHTML = '';
-  
+
+  if (isLoading) {
+    grid.innerHTML = `
+      <div class="spinner-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Caricamento...</span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (!displayedProducts || displayedProducts.length === 0) {
+    grid.innerHTML = "<p class='info-message'>Nessun prodotto trovato.</p>";
+    return;
+  }
+
+  grid.innerHTML = ""; // Pulisci il grid prima di renderizzare
   const productsToShow = displayedProducts.slice(0, initialProductsCount);
   renderProductRows(productsToShow);
   setupLoadMoreButton();
@@ -246,6 +207,7 @@ function createProductCard(product, index) {
   const card = document.createElement("div");
   card.className = "product-card";
   card.dataset.index = index;
+  card.dataset.productId = product.id;  
   
   card.innerHTML = `
     <img src="${product.immagini_url?.[0] || 'placeholder.jpg'}" alt="${product.nome}">
@@ -256,13 +218,43 @@ function createProductCard(product, index) {
     </p>
   `;
   
-  card.addEventListener('click', () => openOverlay(index));
+  card.addEventListener('click', (e) => {
+    if (!window.displayedProducts || window.displayedProducts.length === 0) {
+      console.warn("Prodotti non ancora caricati");
+      return;
+    }
+    openOverlay(index);
+  });
+  
   return card;
 }
 
 function openOverlay(index) {
-  currentProductIndex = index;
-  const product = displayedProducts[currentProductIndex];
+   if (!window.displayedProducts || !Array.isArray(window.displayedProducts)) {
+    console.error("displayedProducts non è un array valido", window.displayedProducts);
+    alert("Si è verificato un errore. Ricarica la pagina.");
+    return;
+  }
+
+  if (window.displayedProducts.length === 0) {
+    console.error("displayedProducts è vuoto");
+    alert("Nessun prodotto disponibile al momento.");
+    return;
+  }
+
+  if (index < 0 || index >= window.displayedProducts.length) {
+    console.error(`Indice prodotto non valido: ${index} (displayedProducts.length = ${window.displayedProducts.length})`);
+    return;
+  }
+
+  if (typeof index !== 'number' || index < 0) {
+    console.error("Indice non valido fornito a openOverlay:", index);
+    return;
+  }
+  
+  window.currentProductIndex = index;
+  console.log("indice corrente aggiornato a: ", window.currentProductIndex);
+  const product = window.displayedProducts[index];
 
   document.body.classList.add('overlay-active');
 
@@ -304,6 +296,21 @@ function openOverlay(index) {
   inputQty.value = "1";
   inputQty.setAttribute("data-max", product.disponibilita);
 
+  const quantityContainer = document.getElementById("quantitySelectionContainer");
+  const [decreaseBtn, increaseBtn] = quantityContainer.querySelectorAll("button");
+  
+  decreaseBtn.onclick = (e) => {
+    e.stopPropagation();
+    changeQuantity(-1);
+  };
+  
+  increaseBtn.onclick = (e) => {
+    e.stopPropagation();
+    changeQuantity(1);
+  };
+
+  inputQty.onchange = validateQuantityInput;
+
   document.getElementById("productOverlay").classList.add("show");
 
   setupOverlayArrows();
@@ -315,17 +322,7 @@ function updateArrowVisibility() {
   const rightArrow = document.querySelector(".overlay-arrow.right");
 
   leftArrow.classList.toggle("hidden", currentProductIndex <= 0);
-  rightArrow.classList.toggle("hidden", currentProductIndex >= products.length - 1);
-}
-
-function changeQuantity(delta) {
-  const input = document.getElementById("quantityInput");
-  const max = parseInt(input.dataset.max);
-  let newVal = parseInt(input.value) + delta;
-  if (isNaN(newVal) || newVal < 1) newVal = 1;
-  if (newVal > max) newVal = max;
-  input.value = newVal;
-  validateQuantityInput();
+  rightArrow.classList.toggle("hidden", currentProductIndex >= displayedProducts.length - 1);
 }
 
 function validateQuantityInput() {
@@ -382,6 +379,16 @@ function closeOverlay() {
   document.body.classList.remove('overlay-active');
 }
 
+function changeQuantity(delta) {
+  const input = document.getElementById("quantityInput");
+  const max = parseInt(input.dataset.max);
+  let newVal = parseInt(input.value) + delta;
+  if (isNaN(newVal) || newVal < 1) newVal = 1;
+  if (newVal > max) newVal = max;
+  input.value = newVal;
+  validateQuantityInput();
+}
+
 
 document.querySelector('.close-btn')?.addEventListener('click', function(e) {
   e.stopPropagation(); // Impedisce la chiusura quando si clicca sul prodotto
@@ -424,18 +431,6 @@ window.applyProductFilters = applyProductFilters;
 
 window.updateProductGrid = updateProductGridWithSearchResults;
 
-/*window.updateProductGrid = function(filteredProducts) {
-  // Converti i dati se necessario (aggiungi questo blocco)
-  displayedProducts = filteredProducts.map(product => ({
-    ...product,
-    // Assicura che i campi siano nel formato corretto
-    categoria_id: product.categoria_id || product.categoria,
-    immagini_url: product.immagini_url || [product.immagine_url || 'placeholder.jpg'],
-    disponibilita: product.disponibilita || product.stock || 0
-  }));
-  
-  renderInitialProducts();
-}*/
 
 // Event listeners
 document.getElementById("productOverlay").addEventListener("click", function(event) {
@@ -444,7 +439,6 @@ document.getElementById("productOverlay").addEventListener("click", function(eve
   }
 });
 
-//export { loadProducts, applyProductFilters, updateProductGridWithSearchResults };
 
 // Inizializzazione
 document.addEventListener('DOMContentLoaded', () => {
@@ -465,3 +459,22 @@ window.updateProductGridWithSearchResults = function(products) {
 window.lastFilters = {};
 window.searchResults = [];
 window.isSearchActive = false;
+
+// Aggiungi alla fine del file:
+window.updateProductCardUI = function(productId) {
+  const product = window.displayedProducts.find(p => p.id === productId) || 
+                 window.allProducts.find(p => p.id === productId);
+  if (!product) return;
+
+  const cards = document.querySelectorAll(`.product-card[data-product-id="${productId}"]`);
+  
+  cards.forEach(card => {
+    const availabilityEl = card.querySelector('.availability');
+    if (availabilityEl) {
+      availabilityEl.textContent = product.disponibilita > 0 
+        ? `Disponibile` 
+        : 'Esaurito';
+      availabilityEl.classList.toggle('out-of-stock', product.disponibilita <= 0);
+    }
+  });
+};

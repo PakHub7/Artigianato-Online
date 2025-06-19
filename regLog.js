@@ -130,7 +130,7 @@ registerOverlay.addEventListener("click", function (event) {
 
 // Gestione click sui pulsanti ruolo
 document.getElementById("clienteBtn").addEventListener("click", () => showDynamicForm("cliente"));
-document.getElementById("venditoreBtn").addEventListener("click", () => showDynamicForm("venditore"));
+document.getElementById("venditoreBtn").addEventListener("click", () => showDynamicForm("artigiano"));
 
 function showDynamicForm(ruolo) {
   ruoloSelezionato = ruolo;
@@ -145,8 +145,8 @@ function showDynamicForm(ruolo) {
   if (ruolo === "cliente") {
     formTitle.textContent = "Registrazione Cliente";
     usernameInput.placeholder = "Nome utente";
-  } else if (ruolo === "venditore") {
-    formTitle.textContent = "Registrazione Venditore";
+  } else if (ruolo === "artigiano") {
+    formTitle.textContent = "Registrazione Artigiano";
     usernameInput.placeholder = "Nome dell’attività";
   }
 }
@@ -163,7 +163,7 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
   const errorDiv = document.getElementById("formError");
 
   // Validazione
-  if (!username || !email || !telefono || !password || (ruoloSelezionato === "venditore" && !indirizzo)) {
+  if (!username || !email || !telefono || !password || (ruoloSelezionato === "artigiano" && !indirizzo)) {
     errorDiv.textContent = "Tutti i campi sono obbligatori.";
     return;
   }
@@ -175,7 +175,7 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
     email,
     telefono,
     password,
-    ...(ruoloSelezionato === "venditore" ? { indirizzo } : {})
+    ...(ruoloSelezionato === "artigiano" ? { indirizzo } : {})
   };
 
   // Invio al backend
@@ -189,7 +189,7 @@ document.getElementById("formRegistrazione").addEventListener("submit", function
       if (response.success) {
         closeRegisterOverlay();
         updateNavbarForLogin();
-        if (typeof updateUserSidebar === "function") updateUserSidebar(); // Aggiorna la sidebar se la funzione esiste
+        if (typeof updateUserSidebar === "function") updateUserSidebar();
       } else {
         errorDiv.textContent = response.message || "Registrazione fallita.";
       }
@@ -226,12 +226,84 @@ window.addEventListener("DOMContentLoaded", () => {
   if(typeof updateUserSidebar === "function") updateUserSidebar(); // Aggiorna la sidebar se la funzione esiste
 });
 
+function getCurrentUserId() {
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  return user?.id; // Restituisce l'ID dell'utente o undefined se non loggato
+}
+
 // --------- LOGOUT ---------
-function logoutUser() {
+/*function logoutUser() {
+  // Ripristina la disponibilità di tutti i prodotti nel carrello
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  
+  cart.forEach(item => {
+    const product = window.displayedProducts.find(p => p.id === item.id) || 
+                   window.allProducts.find(p => p.id === item.id);
+    if (product) {
+      product.disponibilita += item.quantity;
+    }
+  });
+
+  // Svuota completamente il carrello
+  localStorage.removeItem("cart");
+  sessionStorage.removeItem(`cart_${getCurrentUserId()}`);
+  
+  // Aggiorna l'interfaccia
+  if (typeof renderCartItems === "function") renderCartItems();
+  if (typeof updateCartBadge === "function") updateCartBadge(0);
+  if (typeof updateProductCardUI === "function") {
+    cart.forEach(item => updateProductCardUI(item.id));
+  }
+
+  // Esegui il logout
   localStorage.removeItem("loggedInUser");
   updateNavbarForLogin();
   closeUserOverlay();
-};
+};*/
+
+function logoutUser() {
+  // 1. Ripristina la disponibilità dei prodotti
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  
+  cart.forEach(item => {
+    const product = window.displayedProducts?.find(p => p.id === item.id) || 
+                   window.allProducts?.find(p => p.id === item.id);
+    if (product) {
+      product.disponibilita += item.quantity;
+    }
+  });
+
+  // 2. Svuota il carrello
+  localStorage.removeItem("cart");
+  
+  // 3. Rimuovi solo se l'utente è loggato
+  const userId = getCurrentUserId();
+  if (userId) {
+    sessionStorage.removeItem(`cart_${userId}`);
+  }
+
+  // 4. Esegui il logout
+  localStorage.removeItem("loggedInUser");
+  
+  // 5. Aggiorna l'interfaccia
+  updateNavbarForLogin();
+  closeUserOverlay();
+  
+  if (typeof renderCartItems === "function") {
+    renderCartItems();
+  }
+  
+  if (typeof updateCartBadge === "function") {
+    updateCartBadge(0);
+  }
+
+  // 6. Aggiorna le card prodotto
+  cart.forEach(item => {
+    if (typeof updateProductCardUI === "function") {
+      updateProductCardUI(item.id);
+    }
+  });
+}
 
 // Gestione logout automatico
 /*function setupAutoLogout() {

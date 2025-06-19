@@ -1,6 +1,3 @@
-import { updateProductGridWithSearchResults, loadProducts } from './productsDisplay.js';
-
-// Variabili di stato
 let currentSearchTerm = '';
 let isSearchActive = false;
 let isLoading = false;
@@ -9,7 +6,7 @@ let isLoading = false;
  * Esegue la ricerca dei prodotti
  * @param {string} searchTerm - Termine da cercare
 */
-export async function executeSearch(searchTerm) {
+async function executeSearch(searchTerm) {
     if (isLoading) return;
     
     try {
@@ -20,7 +17,7 @@ export async function executeSearch(searchTerm) {
         toggleSearchLoading(true);
 
         
-        const response = await fetch(`/api/search?q=${encodeURIComponent(currentSearchTerm)}`);
+        const response = await fetch(`/api/search?q=${encodeURIComponent(currentSearchTerm)}`); //DA AGGIUNGERE ALLE API
         
         if (!response.ok) {
             throw new Error(`Errore HTTP: ${response.status}`);
@@ -93,7 +90,7 @@ export async function executeSearch(searchTerm) {
 /**
  * Resetta la ricerca e mostra tutti i prodotti
  */
-export async function resetSearch() {
+async function resetSearch() {
     if (!isSearchActive) return;
     
     currentSearchTerm = '';

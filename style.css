@@ -1013,7 +1013,6 @@ body:not(.sidebar-open) .fixed-filter-btn {
 }
 
 .add-to-cart-btn {
-  margin-top: 1.5rem;
   padding: 0.8rem 1.5rem;
   background: #007bff;
   color: white;
@@ -1021,6 +1020,7 @@ body:not(.sidebar-open) .fixed-filter-btn {
   border-radius: 0.6rem;
   cursor: pointer;
   font-size: 1rem;
+  bottom: 0;
 }
 
 .add-to-cart-btn:hover {
@@ -1682,4 +1682,11 @@ body.overlay-active {
   #categories-container {
     grid-template-columns: 1fr;
   }
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
 }
