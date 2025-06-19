@@ -91,7 +91,8 @@ async function createCheckount(carrello, cliente_id) {
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
-      success_url: "http://localhost:3000/success.html",
+      success_url:
+        "http://localhost:3000/success.html?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "http://localhost:3000/cancel.html",
       metadata: {
         cliente_id: cliente_id.toString(),
@@ -99,9 +100,14 @@ async function createCheckount(carrello, cliente_id) {
       },
     });
 
-    res.json({ url: session.url }); // redirect utente (frontend)
+    await commitTransaction(client);
+
+    return { success: true, url: session.url };
   } catch (error) {
+    await rollbackTransaction(client);
     return { success: false, message: "server_error" };
+  } finally {
+    client.release();
   }
 }
 
