@@ -64,6 +64,25 @@ function updateUserSidebar() {
   }
 }
 
+// Associa bottone 'Ordini' per mostrare ordini utente
+document.getElementById("btnOrders").addEventListener("click", () => {
+  showUserOrders();
+});
+
+function showUserOrders() {
+  // Nasconde tutte le sezioni tranne quella ordini
+  document.querySelectorAll('.user-main > *:not(.user-overlay-close-btn)').forEach(el => {
+    el.classList.add('hidden');
+  });
+
+  const ordersContainer = document.getElementById("ordersContainer");
+  ordersContainer.classList.remove("hidden");
+
+  const ordersList = document.getElementById("ordersList");
+  ordersList.innerHTML = ""; // Pulisce la lista visiva
+
+  loadAndShowOrders(); // Carica gli ordini e li mostra
+}
 
 // Funzione che mostra il grafico nella sezione principale dell'overlay
 function showStatsContent() {
@@ -270,23 +289,25 @@ function showSettingsSection() {
   const emailInput = document.getElementById("settingsEmail");
   const telefonoInput = document.getElementById("settingsTelefono");
   const indirizzoInput = document.getElementById("settingsIndirizzo");
+  const passwordInput = document.getElementById("settingsPassword"); // 🔹 nuovo campo
 
   usernameInput.value = user.username || "";
   emailInput.value = user.email || "";
   telefonoInput.value = user.telefono || "";
   indirizzoInput.value = user.indirizzo || "";
+  passwordInput.value = user.password || ""; // 🔹 precompila se presente
 
-  // Rimuovi eventuali readonly dai campi modificabili
+  // Rendi modificabili tutti tranne email
   usernameInput.removeAttribute("readonly");
   telefonoInput.removeAttribute("readonly");
   indirizzoInput.removeAttribute("readonly");
+  passwordInput.removeAttribute("readonly"); // 🔹
 
-  // Imposta readonly per email
   emailInput.setAttribute("readonly", "true");
-  emailInput.classList.add("readonly"); // se vuoi applicare uno stile grigio, ecc.
+  emailInput.classList.add("readonly");
 
   settingsContainer.classList.remove("hidden");
-};
+}
 
 // Apre il popup
 function openSettingsPopup() {
@@ -324,6 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
       user.username = document.getElementById("settingsUsername").value.trim();
       user.telefono = document.getElementById("settingsTelefono").value.trim();
       user.indirizzo = document.getElementById("settingsIndirizzo").value.trim();
+      user.password = document.getElementById("settingsPassword").value.trim(); // 🔹 aggiunta
 
       try {
         const response = await fetch("/api/updateUser", {
@@ -336,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.success) {
           localStorage.setItem("loggedInUser", JSON.stringify(user));
           closeSettingsPopup();
-          showUserHome(); // Torna alla home utente
+          showUserHome();
         } else {
           alert("Errore durante il salvataggio: " + (data.message || "Errore sconosciuto"));
         }
@@ -346,12 +368,80 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
 });
 
 // Aggiunge nuovi prodotti
 function addNewProduct() {
+  const overlay = document.getElementById("editProductOverlay");
+  const content = document.getElementById("editProductContent");
 
+  content.innerHTML = `
+    <span class="close-btn" onclick="closeEditProductOverlay()">&times;</span>
+    <h2 class="product-overlay-title">Nuovo prodotto</h2>
+
+    <div id="editableCarousel" class="image-carousel editable-carousel"></div>
+
+    <form id="editProductForm" class="edit-product-form">
+      <div class="form-group">
+        <label for="editName">Nome</label>
+        <input type="text" id="editName" required />
+      </div>
+      <div class="form-group">
+        <label for="editDescription">Descrizione</label>
+        <textarea id="editDescription" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="editPrice">Prezzo</label>
+        <input type="number" id="editPrice" step="0.01" required />
+      </div>
+      <div class="form-group">
+        <label for="editStock">Disponibilità</label>
+        <input type="number" id="editStock" required />
+      </div>
+      <button type="submit" class="btn btn-primary mt-3 w-100">Crea prodotto</button>
+    </form>
+  `;
+
+  const editableCarousel = document.getElementById("editableCarousel");
+
+  // Bottone per aggiunta immagini
+  const addBtn = document.createElement("div");
+  addBtn.className = "image-wrapper add-image-btn";
+  addBtn.innerHTML = `
+    <div class="add-image-inner">
+      <i class="fa-solid fa-plus"></i>
+    </div>
+    <input type="file" id="uploadImageInput" accept="image/*" class="hidden" />
+  `;
+  const fileInput = addBtn.querySelector("#uploadImageInput");
+  addBtn.addEventListener("click", () => {
+    fileInput.click();
+  });
+  fileInput.addEventListener("change", handleImageUpload);
+  editableCarousel.appendChild(addBtn);
+
+  overlay.classList.add("show");
+  content.classList.remove("animate-in");
+  void content.offsetWidth;
+  content.classList.add("animate-in");
+
+  document.getElementById("editProductForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const newProduct = {
+      id: Date.now(), // ID temporaneo
+      nome: document.getElementById("editName").value.trim(),
+      descrizione: document.getElementById("editDescription").value.trim(),
+      prezzo: parseFloat(document.getElementById("editPrice").value),
+      disponibilita: parseInt(document.getElementById("editStock").value),
+      immagini_url: Array.from(document.querySelectorAll(".image-wrapper img")).map(img => img.src),
+      artigiano_id: JSON.parse(localStorage.getItem("loggedInUser")).username
+    };
+
+    products.push(newProduct);
+    closeEditProductOverlay();
+    showSellerProducts();
+  });
 }
 
 let productToDelete = null;
@@ -408,41 +498,147 @@ function openEditProductOverlay(productId) {
   const product = products.find(p => p.id === productId);
   if (!product) return;
 
-  // Inserisce contenuto modificabile
   content.innerHTML = `
     <span class="close-btn" onclick="closeEditProductOverlay()">&times;</span>
     <h2 class="product-overlay-title">Modifica prodotto</h2>
-    <form id="editProductForm">
-      <input type="text" value="${product.nome}" id="editName" placeholder="Nome prodotto" required />
-      <input type="number" value="${product.prezzo}" id="editPrice" step="0.01" required />
-      <input type="number" value="${product.disponibilita}" id="editStock" required />
-      <button type="submit" class="add-to-cart-btn">Salva modifiche</button>
+
+    <div id="editableCarousel" class="image-carousel editable-carousel"></div>
+
+    <form id="editProductForm" class="edit-product-form">
+      <div class="form-group">
+        <label for="editName">Nome</label>
+        <input type="text" id="editName" value="${product.nome}" required />
+      </div>
+      <div class="form-group">
+        <label for="editDescription">Descrizione</label>
+        <textarea id="editDescription" rows="4">${product.descrizione || ""}</textarea>
+      </div>
+      <div class="form-group">
+        <label for="editPrice">Prezzo</label>
+        <input type="number" id="editPrice" value="${product.prezzo}" step="0.01" required />
+      </div>
+      <div class="form-group">
+        <label for="editStock">Disponibilità</label>
+        <input type="number" id="editStock" value="${product.disponibilita}" required />
+      </div>
+      <button type="submit" class="btn btn-primary mt-3 w-100">Salva modifiche</button>
     </form>
   `;
 
-  // Mostra overlay
-  overlay.classList.add("show");
-  content.classList.remove("animate-in"); // reset
-  void content.offsetWidth; // trigger reflow
-  content.classList.add("animate-in"); // riapplica animazione
+  const editableCarousel = document.getElementById("editableCarousel");
+  // Genera immagini con .image-wrapper
+  product.immagini_url.forEach((url, i) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-wrapper";
+    wrapper.innerHTML = `
+      <img src="${url}" alt="Immagine ${i + 1}" class="editable-image" />
+      <button class="remove-image-btn" onclick="removeImageFromCarousel(this)">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `;
+    editableCarousel.appendChild(wrapper);
+  });
+  
+  // Bottone per aggiungere le immagini
+  const addBtn = document.createElement("div");
+  addBtn.className = "image-wrapper add-image-btn";
+  addBtn.innerHTML = `
+    <div class="add-image-inner">
+      <i class="fa-solid fa-plus"></i>
+    </div>
+    <input type="file" id="uploadImageInput" accept="image/*" class="hidden" />
+  `;
 
-  // Gestione submit
+  const fileInput = addBtn.querySelector("#uploadImageInput");
+
+  // Rendi tutta la card cliccabile
+  addBtn.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+fileInput.addEventListener("change", handleImageUpload);
+  editableCarousel.appendChild(addBtn);
+
+  overlay.classList.add("show");
+  content.classList.remove("animate-in");
+  void content.offsetWidth;
+  content.classList.add("animate-in");
+
   document.getElementById("editProductForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    // Salvataggio dati modificati
     product.nome = document.getElementById("editName").value.trim();
+    product.descrizione = document.getElementById("editDescription").value.trim();
     product.prezzo = parseFloat(document.getElementById("editPrice").value);
     product.disponibilita = parseInt(document.getElementById("editStock").value);
-
-    // TODO: invio al backend, se necessario
-    // fetch('/api/updateProduct', ...)
+    // Now images are in .image-wrapper img
+    product.immagini_url = Array.from(document.querySelectorAll(".image-wrapper img")).map(img => img.src);
 
     closeEditProductOverlay();
-    showSellerProducts(); // Ricostruisci griglia prodotti
+    showSellerProducts();
   });
 }
 
 function closeEditProductOverlay() {
   document.getElementById("editProductOverlay").classList.remove("show");
   document.getElementById("editProductContent").classList.remove("animate-in");
+}
+
+function addImageToCarousel() {
+  const input = document.getElementById("newImageUrl");
+  const url = input.value.trim();
+  if (!url) return;
+
+  const editableCarousel = document.getElementById("editableCarousel");
+  // Find the add-image-btn to insert before it
+  const addBtn = editableCarousel.querySelector(".add-image-btn");
+  const wrapper = document.createElement("div");
+  wrapper.className = "image-wrapper";
+  wrapper.innerHTML = `
+    <button class="remove-image-btn" onclick="removeImageFromCarousel(this)">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  `;
+  if (addBtn) {
+    editableCarousel.insertBefore(wrapper, addBtn);
+  } else {
+    editableCarousel.appendChild(wrapper);
+  }
+  input.value = "";
+}
+
+function removeImageFromCarousel(btn) {
+  // Now .image-wrapper is the container
+  const container = btn.closest(".image-wrapper");
+  if (container) container.remove();
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const imageUrl = e.target.result;
+
+    const editableCarousel = document.getElementById("editableCarousel");
+    const addBtn = editableCarousel.querySelector(".add-image-btn");
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-wrapper";
+    wrapper.innerHTML = `
+      <img src="${imageUrl}" alt="Nuova immagine" class="editable-image" />
+      <button class="remove-image-btn" onclick="removeImageFromCarousel(this)">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `;
+
+    if (addBtn) {
+      editableCarousel.insertBefore(wrapper, addBtn);
+    } else {
+      editableCarousel.appendChild(wrapper);
+    }
+
+    event.target.value = ""; // Reset del file input
+  };
+  reader.readAsDataURL(file);
 }
