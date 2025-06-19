@@ -1,6 +1,11 @@
 const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
 
+// parametro utile per l'hashing della password (motivo per cui ho messo la libreria bcrypt)
+// viene generata una stringa di dati di lunghezza fissa (l'hash)
+// che è estremamente difficile da invertire per ottenere la password originale
+const SALT_ROUNDS = 10;
+
 // Configura la connessione al tuo server PostgreSQL
 const pool = new Pool({
   user: "postgres",
@@ -23,7 +28,7 @@ async function getClient() {
 }
 
 // SEZIONE UTENTI
-async function getUser(username) {
+async function getUser(username, login=false) {
   // TODO: se serve aggiungere la possibilità di cercare un utente tramite ID, se non serve non si fa
   try {
     const result = await pool.query(
@@ -36,7 +41,12 @@ async function getUser(username) {
     }
 
     const user = result.rows[0];
-    return { success: true, user: user };
+    const { password_hash, ...safeUser } = user; // evita di restituire la password
+    if (login) {
+      return { success: true, user: user };
+    } else {
+      return { success: true, user: safeUser };
+    }
   } catch (error) {
     console.error("Errore nella query: ", error);
     return { success: false, message: "server_error" };
@@ -45,13 +55,14 @@ async function getUser(username) {
 
 async function updateUser(id, username, password, telefono, indirizzo) {
   try {
+    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const result = await pool.query(
-      "UPDATE utenti SET username=$1, password=$2, telefono=$3, indirizzo=$4 WHERE id=$5",
-      [username, password, telefono, indirizzo, id],
+      "UPDATE utenti SET username=$1, password_hash=$2, telefono=$3, indirizzo=$4 WHERE id=$5",
+      [username, password_hash, telefono, indirizzo, id],
     );
 
     if (result.rowCount > 0) {
-      user = await getUser(username);
+      const user = await getUser(username);
       return { success: true, user: user };
     } else {
       return { success: false, message: "not_found" };
@@ -82,7 +93,7 @@ async function login(username, password) {
     const user = await getUser(username);
 
     if (user.success) {
-      const match = await bcrypt.compare(password, user.password_hash);
+      const match = await bcrypt.compare(password, user.user.password_hash);
 
       if (!match) {
         return { success: false, message: "wrong_password" };
@@ -92,11 +103,11 @@ async function login(username, password) {
         success: true,
         user: {
           // id: user.id, // Non dovrebbe servire nei risultati login/signup ma solo come indicizzazione
-          username: user.username,
-          email: user.email,
-          telefono: user.telefono,
-          indirizzo: user.indirizzo, // è meglio restituirlo solo quando serve, rimuovere in seguito + aggiungerlo come dato per i pagamenti
-          role: user.ruolo,
+          username: user.user.username,
+          email: user.user.email,
+          telefono: user.user.telefono,
+          indirizzo: user.user.indirizzo, // è meglio restituirlo solo quando serve, rimuovere in seguito + aggiungerlo come dato per i pagamenti
+          role: user.user.ruolo,
         },
       };
     } else {
@@ -108,13 +119,13 @@ async function login(username, password) {
   }
 }
 
-async function register(username, password, email, telefono, indirizzo, ruolo) {
+async function register(username, password, email, telefono, ruolo, indirizzo) {
   try {
     if (!username || !password) {
-      return res.status(400).json({
+      return {
         success: false,
         message: "Username e password sono obbligatori",
-      });
+      };
     }
 
     const user = await getUser(username);
@@ -146,11 +157,11 @@ async function register(username, password, email, telefono, indirizzo, ruolo) {
 }
 
 // SEZIONE IMMAGINI
-async function getProductImage(id, max = 0) {
+async function getProductImages(id, max = 0) {
   // get N (max=N) or all (max=0)
   // TODO: sostituire url sia qui sia nella tabella immagini con img o simili
   let query = `
-    SELECT img
+    SELECT id, img
     FROM immagini
     WHERE idProd = $1
   `;
@@ -167,7 +178,7 @@ async function getProductImage(id, max = 0) {
   try {
     const result = await pool.query(query, params);
     if (result.rows.length) {
-      return { success: true, images: result.rows }; // TODO: chiedere se vogliono tutta la riga o solo la colonna con il nome dell'img
+      return { success: true, images: result.rows.map(r => ({ id: r.id, image: r.img })) };
     } else {
       return { success: false, message: "no_rows" };
     }
@@ -224,7 +235,7 @@ async function deleteProductImage(id) {
 // ottenere 1 sola immagine per la vetrina
 async function getProducts(filters = {}) {
   // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri
-  let query = "SELECT id, nome, prezzo FROM prodotti";
+  let query = "SELECT id, nome, prezzo, disponibilita FROM prodotti";
   let values = [];
   let conditions = [];
   let i = 1;
@@ -264,7 +275,7 @@ async function getProducts(filters = {}) {
 
     if ("limit" in filters && typeof filters.limit === "string") {
       const limite = parseInt(filters.limit);
-      query += ` LIMIT $${i}`;
+      // query += ` LIMIT $${i}`;
       // Assicurarsi che sia un numero valido
       if (!isNaN(limite)) {
         query += ` LIMIT $${i}`;
@@ -275,11 +286,21 @@ async function getProducts(filters = {}) {
   }
 
   try {
-    const result = await pool.query(
+    const products = await pool.query(
       query,
       values.length > 0 ? values : undefined,
     );
-    return result.rows;
+
+    const result = await Promise.all(
+      products.rows.map(async (product) => {
+        const immagini = await getProductImages(product.id); // deve ritornare array
+        return {
+          prodotto: product,
+          immagini: immagini.images,
+        };
+      })
+    );
+    return { success: true, data: result };
   } catch (error) {
     console.error("Error executing query: ", error);
     // throw error; // sostituire con un return { success: false, message: "" }; - fatto
@@ -297,6 +318,8 @@ async function getProduct(id, client = pool) {
     if (!product) {
       return { success: false, message: "product_not_found" };
     }
+    const images = await getProductImages(id);
+    product.immagini = images;
     return { success: true, product: product };
   } catch (error) {
     console.error("Error executing query: ", error);
@@ -324,7 +347,7 @@ async function addProduct(
   try {
     const result = await pool.query(
       "INSERT INTO prodotti (nome, categoria, descrizione, prezzo, disponibilita, idVenditore) VALUES ($1, $2, $3, $4, $5, $6)"[
-        (nome, categoria, descrizione, prezzo, disponibilita, idVenditore)
+        [nome, categoria, descrizione, prezzo, disponibilita, idVenditore]
       ],
     );
 
@@ -385,7 +408,7 @@ async function updateProduct(id, params = {}, client = pool) {
   try {
     const result = await client.query(
       query,
-      valori.length > 0 ? valori : undefined,
+      values.length > 0 ? valori : undefined,
     );
     if (result.rowCount > 0) {
       return { success: true };
@@ -504,7 +527,7 @@ module.exports = {
   register,
   getUser,
   updateUser,
-  getProductImage,
+  getProductImages,
   addProductImage,
   deleteProductImage,
   getProduct,

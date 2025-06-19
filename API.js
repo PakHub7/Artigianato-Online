@@ -12,7 +12,7 @@ const {
   updateUser,
   getProducts,
   getProduct,
-  getProductImage,
+  getProductImages,
   addProductImage,
   deleteProductImage,
 } = require("./utils/database");
@@ -20,16 +20,11 @@ const {
 const app = express();
 const port = 3000;
 
-// parametro utili per l'hashing della password (motivo per cui ho messo la libreria bcrypt)
-// viene generata una stringa di dati di lunghezza fissa (l'hash)
-// che è estremamente difficile da invertire per ottenere la password originale
-const SALT_ROUNDS = 10;
-
 app.use(express.json());
 
 // Servi la pagina HTML
 app.use(express.static(path.join(__dirname)));
-app.use(cors({origin:'*'}));
+app.use(cors({ origin: "*" }));
 
 // SEZIONE UTENTI
 app.post("/api/login", async (req, res) => {
@@ -70,7 +65,14 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/register", async (req, res) => {
-  const { username, password, email } = req.body;
+  const {
+    username,
+    password,
+    email,
+    telefono,
+    ruolo,
+    indirizzo = null,
+  } = req.body;
   if (!username || !password || !email) {
     return res.status(400).json({
       success: false,
@@ -79,7 +81,14 @@ app.post("/api/register", async (req, res) => {
   }
 
   try {
-    const result = await register(username, password, email);
+    const result = await register(
+      username,
+      password,
+      email,
+      telefono,
+      ruolo,
+      indirizzo,
+    );
 
     if (result.success) {
       return res.status(201).json({ success: true, data: result.user });
@@ -162,7 +171,7 @@ app.get("/api/product/:id/image", async (req, res) => {
   try {
     const id = req.params.id;
     const max = parseInt(req.query.max) || 0;
-    const result = await getProductImage(id, max);
+    const result = await getProductImages(id, max);
     if (result.success) {
       return res.status(200).json({ success: 200, data: result.images });
     }
@@ -261,10 +270,10 @@ app.get("/api/products", async (req, res) => {
     }
   */
   try {
-    const filters = req.query;
+    const filters = req.query || null;
     const products = await getProducts(filters);
     if (products.success) {
-      return res.status(200).json({ success: true, data: products }); // products contiene l'array dei prodotti
+      return res.status(200).json({ success: true, data: products.products }); // products contiene l'array dei prodotti
     } else {
       return res
         .status(404)
@@ -330,7 +339,7 @@ app.post("/api/product/add", async (req, res) => {
 });
 
 //Api inerente a deleteProduct
-app.post("/api/product/delete", async (req, res) => {
+app.delete("/api/product/delete", async (req, res) => {
   const { id } = req.body;
 
   try {
