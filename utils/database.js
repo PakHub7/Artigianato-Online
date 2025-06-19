@@ -10,6 +10,18 @@ const pool = new Pool({
   port: 5432,
 });
 
+// SEZIONE DB UTILS
+async function getClient() {
+  // questo client è essenziale perché tutte le operazioni all'interno di una transazione devono utilizzare lo stesso client.
+  // utile, ma opzionale, anche per le altre funzioni
+  try {
+    return await pool.connect();
+  } catch (error) {
+    console.error("Error getting client from pool:", error);
+    return null;
+  }
+}
+
 // SEZIONE UTENTI
 async function getUser(username) {
   // TODO: se serve aggiungere la possibilità di cercare un utente tramite ID, se non serve non si fa
@@ -275,10 +287,10 @@ async function getProducts(filters = {}) {
   }
 }
 
-async function getProduct(id) {
+async function getProduct(id, client = pool) {
   // manca la funzione per prendere tutte le immagini del prodotto, capire come vogliono gestirle + salvarle (path, url o blob)
   try {
-    const result = await pool.query("SELECT * FROM prodotti WHERE id = $1", [
+    const result = await client.query("SELECT * FROM prodotti WHERE id = $1", [
       id,
     ]);
     const product = result.rows[0];
@@ -338,7 +350,7 @@ async function deleteProduct(id) {
   }
 }
 
-async function updateProduct(id, params = {}) {
+async function updateProduct(id, params = {}, client = pool) {
   let query = "UPDATE prodotti SET";
   let values = [];
   let conditions = [];
@@ -371,7 +383,7 @@ async function updateProduct(id, params = {}) {
   }
 
   try {
-    const result = await pool.query(
+    const result = await client.query(
       query,
       valori.length > 0 ? valori : undefined,
     );
@@ -420,18 +432,48 @@ async function showOrder(id, ruolo) {
 2. se disponibili, eliminazione dal database della quantità richiesta dei prodotti e aggiunta in tabella ordini degli ordini effettuati
 3. se non disponibili si notifica l'utente mostrando i prodotti che non sono più disponibili
 */
-async function addOrder() {
-  // durante il pagamento - stato in lavorazione
+async function addOrder(cliente_id, venditore_id, id_prodotto, quantita, id_pagamento, client = pool) {
   try {
-    const result = await pool.query(
-      "INSERT FROM ordini (cliente_id, venditore_id, id_prodotto, quantita, id_pagamento",
+    const result = await client.query( // Use client instead of pool
+      "INSERT INTO ordini (cliente_id, venditore_id, id_prodotto, quantita, id_pagamento) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [cliente_id, venditore_id, id_prodotto, quantita, id_pagamento]
     );
+    return { success: true, order: result.rows[0] };
   } catch (error) {
+    // console.error("Error adding order:", error);
     return { success: false, message: "server_error" };
   }
 }
 
 async function updateOrder() {}
+
+// SEZIONE TRANSAZIONI
+async function beginTransaction(client) {
+  try {
+    const result = await client.query("BEGIN");
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function commitTransaction(client) {
+  try {
+    await client.query("COMMIT");
+  } catch (error) {
+    return { success: false, message: "server_error" };
+  }
+}
+
+async function rollbackTransaction(client) {
+  try {
+    await client.query("ROLLBACK");
+  } catch (error) {
+    return { success: true, message: "server_error" };
+  }
+}
+
+// DA DEFINIRE
 
 async function notifyUser() {
   // se alcuni prodotti nel carrello non sono più disponibili
@@ -467,5 +509,14 @@ module.exports = {
   deleteProductImage,
   getProduct,
   getProducts,
-  updateProduct
+  updateProduct,
+  deleteUser,
+  deleteProduct,
+  addProduct,
+  showOrder,
+  addOrder,
+  getClient,
+  beginTransaction,
+  commitTransaction,
+  rollbackTransaction,
 };

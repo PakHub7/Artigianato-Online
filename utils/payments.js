@@ -1,5 +1,13 @@
 const { getStripePublicKey, getStripeSecretKey } = require("./donotshare");
-const { getProduct, updateProduct } = require("./database.js");
+const {
+  getProduct,
+  updateProduct,
+  addOrder,
+  getClient,
+  beginTransaction,
+  commitTransaction,
+  rollbackTransaction,
+} = require("./database.js");
 
 const stripe = require("stripe")(getStripeSecretKey());
 
@@ -8,22 +16,32 @@ const stripe = require("stripe")(getStripeSecretKey());
 
 async function createCheckount(carrello, cliente_id) {
   // fare get prodotto/i + update per diminuire la quantità + begin transaction
-  try {
-    const line_items = [];
+  const client = await getClient();
+  if (!client) {
+    return { success: false, message: "database_connection_error" };
+  }
 
-    // Qui devi implementare getProduct da DB, per esempio:
-    /*async function getProduct(prodotto_id) {
-      const result = await pool.query(
-        "SELECT nome, descrizione, prezzo FROM prodotti WHERE id = $1",
-        [prodotto_id],
-      );
-      if (result.rowCount === 0) return { success: false };
-      return { success: true, product: result.rows[0] };
-      }*/
+  try {
+    await beginTransaction(client);
+    const line_items = [];
+    const productsToUpdate = [];
 
     for (const item of carrello) {
-      const prodotto = await getProduct(item.prodotto_id);
-      if (!prodotto.success) continue;
+      const prodotto = await getProduct(item.prodotto_id, client);
+      if (!prodotto.success) {
+        await rollbackTransaction(client);
+        return {
+          success: false,
+          message: `product_not_found: ${item.prodotto_id}`,
+        };
+      }
+      if (prodotto.product.disponibilita) {
+        await rollbackTransaction(client);
+        return {
+          success: false,
+          message: `not_enough_stock_for: ${prodotto.product.nome}`,
+        };
+      }
 
       line_items.push({
         price_data: {
@@ -37,11 +55,36 @@ async function createCheckount(carrello, cliente_id) {
         quantity: item.quantita,
       });
 
-      const result = await updateProduct(
-        (id = item.prodotto_id),
-        (params = { disponibilita: prodotto.disponibilita - item.quantita }),
+      productsToUpdate.push({
+        id: item.prodotto_id,
+        newAvailability: prodotto.product.disponibilita - item.quantita,
+      });
+    }
+
+    for (const update of productsToUpdate) {
+      const result = await updateProduct(update.id, {
+        disponibilita: update.newAvailability,
+      });
+      if (!result.success) {
+        await rollbackTransaction(client);
+        return {
+          success: false,
+          message: `failed_to_update_product_stock: ${update.id}`,
+        };
+      }
+      // dettagli ordine
+      const orderResult = await addOrder(
+        cliente_id,
+        update.venditore_id,
+        update.id,
+        carrello.find((item) => item.prodotto_id === update.id).quantita,
+        null,
+        client,
       );
-      if (!result.success) continue;
+      if (!orderResult.success) {
+        await rollbackTransaction(client);
+        return { success: false, message: "failed_add_order" };
+      }
     }
 
     const session = await stripe.checkout.sessions.create({
