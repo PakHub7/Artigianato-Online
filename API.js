@@ -244,31 +244,6 @@ app.delete("/api/product/image/:id/delete", async (req, res) => {
 
 // SEZIONE PRODOTTI
 app.get("/api/products", async (req, res) => {
-  /* Esempio richiesta API
-    GET /api/products?categoria=abbigliamento&prezzo_min=50&disponibilita=100&limit=10
-    req.query sarà { categoria: 'abbigliamento', prezzo_min: '50', disponibilita: '100', limit: '10' }
-
-    risultato completo con successo:
-    {
-      "success": true,
-      "products": [
-        { "id": 1, "nome": "Prodotto A", "prezzo": 10.00 },
-        { "id": 2, "nome": "Prodotto B", "prezzo": 25.50 }
-      ]
-    }
-
-    risultato fallimentare:
-    {
-      "success": false,
-      "message": "product_not_found"
-    }
-
-    errore server interno:
-    {
-      "success": false,
-      "message": "Errore interno del server"
-    }
-  */
   try {
     const filters = req.query || null;
     const products = await getProducts(filters);
@@ -313,6 +288,32 @@ app.get("/api/products/:id", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Errore interno del server" });
+  }
+});
+
+app.get("/api/search", async (req, res) => {
+  try {
+    const searchTerm = req.query.q;
+
+    if (!searchTerm || searchTerm.trim() === "") {
+      return res
+        .status(400)
+        .json({ error: "Il termine di ricerca è obbligatorio" });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM prodotti
+       WHERE nome ILIKE $1 OR descrizione ILIKE $1`,
+      [`%${searchTerm}%`],
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("[ERROR] Endpoint /api/search:", err);
+    res.status(500).json({
+      error: "Errore nella ricerca",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
   }
 });
 
