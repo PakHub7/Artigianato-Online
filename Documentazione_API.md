@@ -281,63 +281,90 @@
 # **PRODOTTO**
 
 ## GET /api/search
-
-  ### *Esempio:*
-  ```
-  /api/search?q=maglietta
-  ```
-
-  ### *Parametri query:*
-  ``` JSON
-  {
-      "q": "string (obbligatorio - termine di ricerca per nome o descrizione prodotto)"
-  }
-  ```
-
-  ### *Esempio richiesta API.js:*
-  ```javascript
-  fetch("/api/search?q=maglietta")
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error("Error:", error));
-  ```
-
-  ### *Status code 200:*
-  ``` JSON
-  [
-      {
-          "id": 123,
-          "nome": "Maglietta in Cotone",
-          "descrizione": "Una maglietta comoda e traspirante, 100% cotone biologico.",
-          "prezzo": 25.99,
-          "disponibilita": 250,
-          "categoria": "abbigliamento"
-      },
-      {
-          "id": 124,
-          "nome": "Maglietta Sportiva",
-          "descrizione": "Maglietta tecnica per attività sportive, tessuto traspirante.",
-          "prezzo": 35.50,
-          "disponibilita": 180,
-          "categoria": "abbigliamento"
-      }
-  ]
-  ```
-
-  ### *Status code 400:*
-  ``` JSON
-  {
-      "error": "Il termine di ricerca è obbligatorio"
-  }
-  ```
-
-  ### *Status code 500:*
-  ``` JSON
-  {
-      "error": "Errore nella ricerca",
-      "details": "Database connection failed (solo in development)"
-  }
-  ```
+### *Esempio:*
+```
+/api/search?q=maglietta
+```
+### *Parametri query:*
+``` JSON
+{
+    "q": "string (obbligatorio - termine di ricerca per nome o descrizione prodotto)"
+}
+```
+### *Esempio richiesta API.js:*
+```javascript
+fetch("/api/search?q=maglietta")
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error("Error:", error));
+```
+### *Status code 200:*
+``` JSON
+{
+    "success": true,
+    "data": [
+        {
+            "prodotto": {
+                "id": 123,
+                "nome": "Maglietta in Cotone",
+                "descrizione": "Una maglietta comoda e traspirante, 100% cotone biologico.",
+                "prezzo": 25.99,
+                "disponibilita": 250,
+                "categoria": "abbigliamento",
+                "idvenditore": 45
+            },
+            "immagini": [
+                {
+                    "id": 1,
+                    "image": "url_immagine_1.jpg"
+                },
+                {
+                    "id": 2,
+                    "image": "url_immagine_2.jpg"
+                }
+            ]
+        },
+        {
+            "prodotto": {
+                "id": 124,
+                "nome": "Maglietta Sportiva",
+                "descrizione": "Maglietta tecnica per attività sportive, tessuto traspirante.",
+                "prezzo": 35.50,
+                "disponibilita": 180,
+                "categoria": "abbigliamento",
+                "idvenditore": 67
+            },
+            "immagini": [
+                {
+                    "id": 3,
+                    "image": "url_immagine_3.jpg"
+                }
+            ]
+        }
+    ]
+}
+```
+### *Status code 400:*
+``` JSON
+{
+    "success": false,
+    "message": "Il termine di ricerca è obbligatorio"
+}
+```
+### *Status code 404:*
+``` JSON
+{
+    "success": false,
+    "message": "Nessun prodotto trovato"
+}
+```
+### *Status code 500:*
+``` JSON
+{
+    "success": false,
+    "message": "Errore interno del server"
+}
+```
 
 ## GET /api/products
   ### *Esempio:*

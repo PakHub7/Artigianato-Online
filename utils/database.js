@@ -232,7 +232,36 @@ async function deleteProductImage(id) {
 }
 
 // SEZIONE PRODOTTI
-// ottenere 1 sola immagine per la vetrina
+async function searchProducts(searchTerm) {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM prodotti
+       WHERE nome ILIKE $1 OR descrizione ILIKE $1`,
+      [`%${searchTerm}%`]
+    );
+
+    if (result.rows.length === 0) {
+      return { success: false, message: "no_products_found" };
+    }
+
+    // Aggiunta delle immagini per ogni prodotto trovato
+    const productsWithImages = await Promise.all(
+      result.rows.map(async (product) => {
+        const immagini = await getProductImages(product.id);
+        return {
+          prodotto: product,
+          immagini: immagini.success ? immagini.images : []
+        };
+      })
+    );
+
+    return { success: true, data: productsWithImages };
+  } catch (error) {
+    console.error("Error in searchProducts:", error);
+    return { success: false, message: "server_error" };
+  }
+}
+
 async function getProducts(filters = {}) {
   // Funzione che recupera TUTTI i prodotti o quelli richiesti tramite uno o più filtri
   let query = "SELECT id, nome, prezzo, disponibilita FROM prodotti";

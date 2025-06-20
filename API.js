@@ -296,23 +296,35 @@ app.get("/api/search", async (req, res) => {
     const searchTerm = req.query.q;
 
     if (!searchTerm || searchTerm.trim() === "") {
-      return res
-        .status(400)
-        .json({ error: "Il termine di ricerca è obbligatorio" });
+      return res.status(400).json({
+        success: false,
+        message: "Il termine di ricerca è obbligatorio",
+      });
     }
 
-    const result = await pool.query(
-      `SELECT * FROM prodotti
-       WHERE nome ILIKE $1 OR descrizione ILIKE $1`,
-      [`%${searchTerm}%`],
-    );
+    const result = await searchProducts(searchTerm);
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error("[ERROR] Endpoint /api/search:", err);
-    res.status(500).json({
-      error: "Errore nella ricerca",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        data: result.data,
+      });
+    } else if (result.message === "no_products_found") {
+      return res.status(404).json({
+        success: false,
+        message: "Nessun prodotto trovato",
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Errore interno del server",
+      });
+    }
+  } catch (error) {
+    console.error("Errore durante la ricerca:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Errore interno del server",
     });
   }
 });
