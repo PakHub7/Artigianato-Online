@@ -280,6 +280,65 @@
 
 # **PRODOTTO**
 
+## GET /api/search
+
+  ### *Esempio:*
+  ```
+  /api/search?q=maglietta
+  ```
+
+  ### *Parametri query:*
+  ``` JSON
+  {
+      "q": "string (obbligatorio - termine di ricerca per nome o descrizione prodotto)"
+  }
+  ```
+
+  ### *Esempio richiesta API.js:*
+  ```javascript
+  fetch("/api/search?q=maglietta")
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error("Error:", error));
+  ```
+
+  ### *Status code 200:*
+  ``` JSON
+  [
+      {
+          "id": 123,
+          "nome": "Maglietta in Cotone",
+          "descrizione": "Una maglietta comoda e traspirante, 100% cotone biologico.",
+          "prezzo": 25.99,
+          "disponibilita": 250,
+          "categoria": "abbigliamento"
+      },
+      {
+          "id": 124,
+          "nome": "Maglietta Sportiva",
+          "descrizione": "Maglietta tecnica per attività sportive, tessuto traspirante.",
+          "prezzo": 35.50,
+          "disponibilita": 180,
+          "categoria": "abbigliamento"
+      }
+  ]
+  ```
+
+  ### *Status code 400:*
+  ``` JSON
+  {
+      "error": "Il termine di ricerca è obbligatorio"
+  }
+  ```
+
+  ### *Status code 500:*
+  ``` JSON
+  {
+      "error": "Errore nella ricerca",
+      "details": "Database connection failed (solo in development)"
+  }
+  ```
+
 ## GET /api/products
   ### *Esempio:*
   ```
@@ -1031,6 +1090,3 @@
       "message": "Errore nel recupero dello stato della sessione"
   }
   ```
-
-
-
