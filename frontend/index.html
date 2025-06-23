@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artigianato Online</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm fixed-top py-3">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+      <a class="navbar-brand" href="#">
+        <i class="fa-solid fa-store"></i> Artigianato Online
+      </a>
+
+      <div id="navButtons" class="d-flex gap-2">
+        <button class="nav-btn" onclick="openLoginOverlay()">Accedi</button>
+        <button class="nav-btn nav-btn-primary" onclick="openRegisterOverlay()">Registrati</button>
+      </div>
+
+      <div id="userIconContainer" class="d-none" style="display: none">
+        <button id="userAreaBtn" class="nav-btn user-area-btn" title="Area personale" onclick="openUserOverlay()">
+          <i class="fa-solid fa-user"></i>
+        </button>
+        <button id="cartBtn" class="nav-btn user-area-btn" onclick="openCart()" title="Carrello">
+          <div class="icon-container">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span id="cartCountBadge" class="cart-badge"></span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Filters -->
+  <button class="fixed-filter-btn" id="filterToggle">
+    <i class="fas fa-filter"></i>
+  </button>
+
+  <!-- Barra laterale dei filtri -->
+  <div class="filter-sidebar" id="filterSidebar">
+    <div class="sidebar-header">
+      <button id="closeFilters">&times;</button>
+    </div>
+    <!--Contenuto Filtri-->
+    <div class="sidebar-content">
+      <!-- Filtro Categoria -->
+      <div class="filter-group">
+        <h6>Categorie</h6>
+          <div id="categories-container">
+            <!-- Le categorie saranno caricate qui dinamicamente -->
+          </div>
+        <button id="toggle-categories" class="btn-show-more">Mostra più...</button>
+      </div>
+      
+      <!-- Filtro Prezzo -->
+      <div class="filter-group">
+        <h6>Prezzo</h6>
+        <div class="price-range">
+          <div class="row">
+            <div class="col">
+              <input type="number" min="0" step="0.01" class="form-control" id="minPrice" placeholder="Min" onkeydown="return event.key !== 'e' && event.key !== 'E' && event.key !== '-'">
+              <!-- Qui verrà inserito automaticamente il div.error-message -->
+            </div>
+            <div class="col">
+              <input type="number" class="form-control" id="maxPrice" placeholder="Max">
+              <!-- Qui verrà inserito automaticamente il div.error-message -->
+            </div>
+          </div>
+        </div>
+        <div class="price-order mt-2">
+          <button class="btn btn-sm btn-outline-secondary" id="priceAsc">Crescente ↑</button>
+          <button class="btn btn-sm btn-outline-secondary" id="priceDesc">Decrescente ↓</button>
+        </div>
+      </div>
+      
+      <!-- Filtro Disponibilità -->
+      <div class="filter-group">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="availableOnly">
+          <label class="form-check-label" for="availableOnly">Solo disponibili</label>
+        </div>
+      </div>
+      
+      <button class="btn btn-primary mt-3 w-100" id="applyFilters">Applica Filtri</button>
+      <button class="btn btn-outline-secondary mt-2 w-100" id="resetFilters">Resetta</button>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <!--<button id="closeFilters">×</button>-->
+
+  <!-- Searching Bar -->
+  <div class="container mt-3 mb-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <form class="search-form">
+        <div class="input-group">
+          <input type="search" name="q" class="form-control search-input" 
+                 placeholder="Cerca il prodotto desiderato..." aria-label="Cerca prodotti">
+          <button type="submit" class="btn btn-primary search-button">
+            <i class="fas fa-search"></i> Cerca
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <!-- Hero -->
+  <header class="py-5 text-center bg-light">
+    <div class="container">
+      <h1 class="display-5">Scopri i prodotti unici dei nostri artigiani</h1>
+      <p class="lead">Un mercato online per creazioni autentiche, locali e fatte a mano.</p>
+    </div>
+  </header>
+
+  <div class="product-grid" id="productGrid">
+    <!-- I prodotti vengono inseriti qua dinamicamente -->
+  </div>
+
+  <!-- Overlay per dettagli prodotto -->
+  <div id="productOverlay" class="product-overlay">
+    <!-- Freccia a sinistra -->
+    <div class="overlay-arrow left" onclick="showPreviousProduct()">&#10094;</div>
+
+    <!-- Contenuto dell'overlay -->
+    <div class="product-overlay-content">
+      <span class="close-btn" onclick="closeOverlay()">&times;</span>
+      <div id="overlayCarousel" class="image-carousel"></div>
+        <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+          <img id="modalImage" src="" alt="Immagine ingrandita" />
+        </div>
+      <h2 id="productOverlayTitle" class="product-overlay-title"></h2>    
+      <div id="productOverlayDescription" class="product-overlay-description"></div>
+      <div id="productOverlayPrice" class="product-overlay-price"></div>
+      <div id="productOverlayAvailability" class="product-overlay-availability"></div>
+      <div class="cart-action">
+      <div id="quantitySelectionContainer" class="quantity-selector">
+        <button onclick="changeQuantity(-1)">−</button>
+        <input 
+          type="number"
+          id="quantityInput"
+          class="quantity-input"
+          value="1"
+          min="1"
+          readonly
+        />
+        <small class="error-msg text-danger quantity-error" style="display: none;"></small>
+        <button onclick="changeQuantity(1)">+</button>
+      </div>
+      <button id="addToCartBtn" class="add-to-cart-btn hidden" 
+        onclick="addToCart()">Aggiungi al carrello</button>
+    </div>
+      <div id="productOverlayError" class="error-msg"></div>
+    </div>
+    <div id="cartPopup" class="cart-popup">✅ Aggiunto al carrello!</div>
+    <!-- Freccia a destra -->
+    <div class="overlay-arrow right" onclick="showNextProduct()">&#10095;</div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 bg-light border-top">
+    <div class="container">
+      <small>&copy; 2025 Artigianato Online. Tutti i diritti riservati.</small>
+    </div>
+  </footer>
+
+  <!-- Overlay Login -->
+  <div id="loginOverlay" class="overlay-container hidden">
+    <div class="login-overlay-content">
+      <span class="close-btn" onclick="closeLoginOverlay()">&times;</span>
+      <h2>Accedi</h2>
+      <form class="login-form" id="loginForm">
+        <input type="text" id="loginUsername" placeholder="Nome utente o Email" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit">Accedi</button>
+        <div id="loginError" class="error-msg"></div>
+      </form>
+      <a onclick="closeLoginOverlay(); openRegisterOverlay()"><u>Non hai ancora un account? Registrati</u></a>
+    </div>
+  </div>
+
+  <!-- Overlay Registrazione -->
+  <div id="registerOverlay" class="overlay-container hidden">
+    <div class="register-overlay-content">
+      <span class="close-btn" onclick="closeRegisterOverlay()">&times;</span>
+
+      <!-- Selezione ruolo -->
+      <div id="registerRoleSelection" class="register-overlay-section">
+        <h2 class="register-title">Sei nuovo qui? Registrati come...</h2>
+        <div class="register-button-group">
+          <button id="clienteBtn" class="register-user-button role-cliente">
+            <i class="fa-solid fa-user"></i><br>Cliente
+          </button>
+          <button id="venditoreBtn" class="register-user-button role-venditore">
+            <i class="fa-solid fa-store"></i><br>Venditore
+          </button>
+        </div>
+      </div>
+
+      <!-- Form di registrazione -->
+      <div id="registerFormOverlay" class="form hidden">
+        <span class="back-btn" onclick="showRoleSelection()">&#10094;</span>
+        <h2 class="register-title-form" id="formTitle">Registrazione</h2>
+        <form id="formRegistrazione">
+          <input type="text" id="inputUsername" placeholder="" />
+          <input type="email" id="inputEmail" placeholder="Email" />
+          <input type="tel" id="inputTelefono" placeholder="Telefono" />
+          <input type="text" id="inputIndirizzo" placeholder="Indirizzo" />
+          <input type="password" id="inputPassword" placeholder="Password" />
+          <div class="error-message" id="formError"></div>
+          <button type="submit" class="register-submit">Registrati</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carrello -->
+  <div id="cartContainer">
+    <div class="cart-overlay-content">
+      <h2>🛒 Il tuo carrello</h2>
+      <button class="cart-close-btn" onclick="closeCart()">&gg;</button>
+      <div id="cartItems" class="cart-items">
+        <!-- I prodotti verranno inseriti dinamicamente da cartManager.js -->
+      </div>
+
+      <div class="cart-summary">
+        <p id="cartTotal">Totale: €0,00</p>
+        <button class="checkout-btn">Procedi al pagamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay Area Personale -->
+  <div id="userOverlay" class="user-overlay">
+    <div class="user-overlay-content d-flex">
+
+      <!-- Sidebar aderente al bordo sinistro dell'overlay -->
+      <div class="user-sidebar-icons">
+        <div class="icon-group">
+          <button id="btnUserHome" class="icon-btn" title="Profilo" onclick="showUserHome()">
+            <i class="fa-solid fa-user"></i>
+          </button>
+          <button id="btnOrders" class="icon-btn" title="Ordini"><i class="fa-solid fa-box"></i></button>
+          
+          <button id="btnStats" class="icon-btn hidden" title="Statistiche" onclick="showStatsContent()">
+            <i class="fa-solid fa-chart-line"></i>
+          </button>
+          <button id="btnSettings" class="icon-btn settings-icon" title="Impostazioni" onclick="showSettingsSection()">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+        </div>
+        <button class="icon-btn logout-icon" title="Logout" onclick="logoutUser(); closeUserOverlay();">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+
+      <!-- Contenuto principale -->
+      <div class="user-main">
+        <span class="user-overlay-close-btn" onclick="closeUserOverlay()">&times;</span>
+        <h2 id="userOverlayTitle" class="user-overlay-title"></h2>
+        <div id="sellerProductsContainer" class="hidden">
+          <h4>I tuoi prodotti</h4>
+          <div id="sellerProductGrid" class="product-grid" style="padding: 0; padding-top: 0.5rem">
+          </div>
+        </div>
+
+        <!-- Sezione per le statistiche -->
+        <div id="statsContainer" class="hidden">
+          <h3>Statistiche di vendita</h3>
+          <div id="chartTypeButtons" class="chart-type-buttons">
+            <button onclick="renderSalesChart('bar')">Barra</button>
+            <button onclick="renderSalesChart('line')">Linea</button>
+          </div>
+          <canvas id="venditeChart" width="400" height="200"></canvas>
+
+          <div id="ordersList" class="orders-list"></div>
+        </div>
+
+        <!-- Sezione per le impostazioni -->
+        <div id="settingsContainer" class="hidden p-2">
+          <h3>Impostazioni account</h3>
+          
+          <form id="settingsForm">
+            <div class="form-group mb-3 d-flex align-items-center gap-2">
+              <span class="edit-icon" title="Modifica campo"><i class="fa-solid fa-pen"></i></span>
+              <input type="text" id="settingsUsername" class="form-control" readonly />
+            </div>
+
+            <div class="form-group mb-3 d-flex align-items-center gap-2">
+              <span class="edit-icon disabled" title="Campo non modificabile" style="opacity:0.3;">
+                <i class="fa-solid fa-pen"></i>
+              </span>
+              <input type="email" id="settingsEmail" class="form-control" readonly tabindex="-1" style="background:#e9ecef; pointer-events: none;" />
+            </div>
+
+            <div class="form-group mb-3 d-flex align-items-center gap-2">
+              <span class="edit-icon" title="Modifica campo"><i class="fa-solid fa-pen"></i></span>
+              <input type="tel" id="settingsTelefono" class="form-control" readonly />
+            </div>
+
+            <div class="form-group mb-4 d-flex align-items-center gap-2">
+              <span class="edit-icon" title="Modifica campo"><i class="fa-solid fa-pen"></i></span>
+              <input type="text" id="settingsIndirizzo" class="form-control" readonly />
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openSettingsPopup()">Salva modifiche</button>
+            
+          </form>
+        </div>
+      </div> 
+    </div>
+  </div>
+  
+  <!-- Popup di conferma impostazioni -->
+  <div id="confirmPopup" class="popup hidden">
+    <div class="popup-content">
+      <p>Confermi di voler salvare le modifiche?</p>
+      <button type="button" class="btn btn-secondary" onclick="closeSettingsPopup()">Annulla</button>
+      <button id="confirmSettingsBtn" class="btn btn-success">Conferma</button>
+    </div>
+  </div>
+
+  <!-- Popup eliminazione prodotto -->
+  <div id="deleteConfirmPopup" class="popup hidden">
+    <div class="popup-content">
+      <p>Sei sicuro di voler eliminare questo prodotto?</p>
+      <div class="popup-buttons">
+        <button id="confirmDeleteBtn" class="btn btn-danger">Conferma</button>
+        <button class="btn btn-secondary" onclick="closeDeletePopup()">Annulla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay modifica prodotto -->
+  <div id="editProductOverlay" class="product-overlay">
+    <div id="editProductContent" class="product-overlay-content"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/Filters.js"></script>
+  <script src="/regLog.js"></script>
+  <script src="/userPage.js"></script>
+  <script src="/cartManager.js"></script>
+  <script src="/productsDisplay.js"></script>
+  <script src="/search.js"></script>
+  <script src="/checkout.js"></script>
+</body>
+</html>

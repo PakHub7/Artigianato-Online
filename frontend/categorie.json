@@ -1,0 +1,94 @@
+{
+  "categories": [
+    {
+      "id": "ceramica",
+      "name": "Ceramica e Terracotta",
+      "description": "Vasi, piatti, sculture e oggetti in ceramica fatti a mano",
+      "icon": "fas fa-vase",
+      "color": "#8B4513"
+    },
+    {
+      "id": "tessuti",
+      "name": "Tessuti e Ricami",
+      "description": "Abbigliamento, tessuti per la casa, ricami tradizionali",
+      "icon": "fas fa-cut",
+      "color": "#9932CC"
+    },
+    {
+      "id": "legno",
+      "name": "Lavorazione del Legno",
+      "description": "Mobili, sculture, utensili e oggetti in legno intagliato",
+      "icon": "fas fa-tree",
+      "color": "#228B22"
+    },
+    {
+      "id": "gioielli",
+      "name": "Gioielli e Oreficeria",
+      "description": "Anelli, collane, bracciali e accessori artigianali",
+      "icon": "fas fa-gem",
+      "color": "#FFD700"
+    },
+    {
+      "id": "vetro",
+      "name": "Vetro Artistico",
+      "description": "Oggetti decorativi, lampade e sculture in vetro soffiato",
+      "icon": "fas fa-wine-glass",
+      "color": "#4169E1"
+    },
+    {
+      "id": "cuoio",
+      "name": "Pelletteria e Cuoio",
+      "description": "Borse, cinture, portafogli e accessori in pelle",
+      "icon": "fas fa-briefcase",
+      "color": "#A0522D"
+    },
+    {
+      "id": "metalli",
+      "name": "Lavorazione Metalli",
+      "description": "Ferro battuto, rame, bronzo e sculture metalliche",
+      "icon": "fas fa-hammer",
+      "color": "#696969"
+    },
+    {
+      "id": "alimentari",
+      "name": "Prodotti Alimentari",
+      "description": "Miele, marmellate, conserve e specialità gastronomiche",
+      "icon": "fas fa-apple-alt",
+      "color": "#FF6347"
+    },
+    {
+      "id": "candele",
+      "name": "Candele e Profumi",
+      "description": "Candele artigianali, saponi naturali e profumi",
+      "icon": "fas fa-fire",
+      "color": "#FF4500"
+    },
+    {
+      "id": "decorazioni",
+      "name": "Decorazioni Casa",
+      "description": "Oggetti decorativi, quadri e complementi d'arredo",
+      "icon": "fas fa-home",
+      "color": "#DA70D6"
+    },
+    {
+      "id": "giocattoli",
+      "name": "Giocattoli in Legno",
+      "description": "Giocattoli educativi e decorativi realizzati in legno",
+      "icon": "fas fa-cube",
+      "color": "#32CD32"
+    },
+    {
+      "id": "strumenti",
+      "name": "Strumenti Musicali",
+      "description": "Strumenti tradizionali e moderni fatti a mano",
+      "icon": "fas fa-music",
+      "color": "#8A2BE2"
+    }
+  ],
+  "featured_categories": [
+    "ceramica",
+    "tessuti",
+    "legno",
+    "gioielli"
+  ]
+}
