@@ -15,7 +15,7 @@ Esame pratico del corso di tecnologie innovative per lo sviluppo Web.
 - PostgreSQL
 
 ### Istruzioni:
-- Compilare a dovere il .env (root) per gestire la connessione del database.
+- Compilare a dovere il example.txt in un .env per gestire la connessione del database.
 - Utilizzare npm install nella cartella backend
 - installare docker e docker compose
 - Uilizzare comando docker compose up nel terminale
