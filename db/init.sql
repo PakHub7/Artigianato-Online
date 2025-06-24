@@ -5,7 +5,7 @@
 -- Dumped from database version 15.12
 -- Dumped by pg_dump version 15.12
 
--- Started on 2025-06-23 23:08:48
+-- Started on 2025-06-24 10:17:08
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -242,14 +242,6 @@ COPY public.immagini (idimm, idprod, img) FROM stdin;
 5	9	test.jpg
 6	11	test.jpg
 7	45	test.jpg
-15	91	/upload/files/images/img_1750705350067_7.jpg
-16	92	/upload/files/images/img_1750705579306_657.jpg
-17	93	/upload/files/images/img_1750705654373_671.jpg
-18	95	/upload/files/images/img_1750705972981_95.jpg
-19	95	/upload/files/images/img_1750705972996_690.jpg
-20	95	/upload/files/images/img_1750705973008_340.jpg
-21	96	/upload/files/images/img_1750712167682_600.jpg
-22	96	/upload/files/images/img_1750712167698_883.jpg
 \.
 
 
@@ -331,27 +323,6 @@ COPY public.prodotti (id, nome, descrizione, prezzo, disponibilita, artigiano_id
 10	Portachiavi da parete	Piccolo appendi-chiavi da ingresso.	22.00	9	6	2025-06-19 16:37:55.488688	decorazione
 26	Ciondolo simbolico	Ciondolo con simbolo di infinito.	50.00	8	8	2025-06-19 16:37:55.488688	gioielli
 27	Portachiavi d arte	Portachiavi in metallo cesellato.	25.00	9	8	2025-06-19 16:37:55.488688	accessori
-76	18	18	18.00	18	19	2025-06-23 20:29:55.362983	elettronica
-77	19	19	19.00	19	19	2025-06-23 20:34:18.449987	elettronica
-78	20	20	20.00	20	19	2025-06-23 20:37:41.51776	elettronica
-79	21	21	21.00	21	19	2025-06-23 20:38:29.014519	elettronica
-80	22	22	22.00	22	19	2025-06-23 20:41:29.899531	elettronica
-81	23	23	23.00	23	19	2025-06-23 20:42:31.181056	elettronica
-82	1	1	1.00	1	19	2025-06-23 20:43:49.427726	elettronica
-83	2	2	2.00	2	19	2025-06-23 20:45:26.351918	elettronica
-84	3	3	3.00	3	19	2025-06-23 20:48:07.628258	elettronica
-85	4	4	4.00	4	19	2025-06-23 20:50:40.74592	elettronica
-86	5	5	5.00	5	19	2025-06-23 20:54:32.313777	elettronica
-87	finalr	asd	12.00	12	19	2025-06-23 20:56:59.351184	elettronica
-88	45	45	45.00	45	19	2025-06-23 20:58:58.896207	elettronica
-89	56	12	56.00	56	19	2025-06-23 20:59:39.09036	elettronica
-90	111	111	111.00	111	19	2025-06-23 21:00:11.262983	elettronica
-91	123	123	123.00	123	19	2025-06-23 21:02:30.059725	elettronica
-92	1234	1234	1234.00	213	19	2025-06-23 21:06:19.294525	elettronica
-93	12345	12345	12345.00	12345	19	2025-06-23 21:07:34.363954	elettronica
-94	provaMultipla	as	12.00	12	19	2025-06-23 21:12:21.795882	elettronica
-95	prova	12	12.00	12	19	2025-06-23 21:12:52.968995	elettronica
-96	123132	45545454545454	45.00	45	19	2025-06-23 22:56:07.671793	gioielli
 19	Portaincenso	Portaincenso decorato in ceramica.	16.00	7	7	2025-06-19 16:37:55.488688	decorazione
 \.
 
@@ -514,7 +485,7 @@ ALTER TABLE ONLY public.prodotti
     ADD CONSTRAINT prodotti_artigiano_id_fkey FOREIGN KEY (artigiano_id) REFERENCES public.utenti(id) ON DELETE CASCADE;
 
 
--- Completed on 2025-06-23 23:08:48
+-- Completed on 2025-06-24 10:17:09
 
 --
 -- PostgreSQL database dump complete
